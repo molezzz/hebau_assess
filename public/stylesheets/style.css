@@ -1,7 +1,18 @@
 body {
-  padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 a {
   color: #00B7FF;
+}
+.modal {
+    display: block !important;
+}
+
+.hide {
+    display: none !important;
+}
+.modal-backdrop,
+.modal-backdrop.fade.in{
+  opacity:0.6;
+  filter:alpha(opacity=60);
 }

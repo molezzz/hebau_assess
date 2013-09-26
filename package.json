@@ -14,6 +14,9 @@
     "passport-local": "*",
     "mysql": "2.x",
     "orm": "*",
-    "lodash": "*"
+    "lodash": "*",
+    "randomstring": "*",
+    "validator": "*",
+    "express-resource": "*"
   }
 }

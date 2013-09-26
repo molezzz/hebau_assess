@@ -7,11 +7,13 @@ var express = require('express');
 var engine = require('ejs-locals')
 var routes = require('./routes');
 var user = require('./routes/user');
+var admin = require('./routes/admin');
 var http = require('http');
 var path = require('path');
 var passport = require('passport');
 var orm = require('orm');
 var ex = require('lodash');
+var Resource = require('express-resource');
 
 var app = express();
 
@@ -65,9 +67,12 @@ app.configure('production', function(){
 });
 app.locals.inspect = require('util').inspect;
 
-app.get('/', routes.index);
-app.get('/setup', routes.setup);
+//app.get('/setup', routes.setup);
+app.get('/admin/login', admin.login);
+app.get('/admin/dashboard', admin.index);
+app.resource('admin/users', require('./routes/admin/user'));
 app.get('/users', user.list);
+app.get('/', routes.index);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
