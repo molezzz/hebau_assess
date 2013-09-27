@@ -17,6 +17,9 @@
     "lodash": "*",
     "randomstring": "*",
     "validator": "*",
-    "express-resource": "*"
+    "express-resource": "*",
+    "moment": "*",
+    "moment-timezone": "*",
+    "orm-paging": "*"
   }
 }

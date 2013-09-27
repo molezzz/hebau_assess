@@ -14,6 +14,7 @@ var passport = require('passport');
 var orm = require('orm');
 var ex = require('lodash');
 var Resource = require('express-resource');
+var paging = require("orm-paging");
 
 var app = express();
 
@@ -48,6 +49,8 @@ app.use(passport.session());
 app.use(express.methodOverride());
 app.use(orm.express(dbConfig[app.get('env')],{
   define: function (db, models, next) {
+    db.use(paging);
+
     ex(['User', 'Group']).forEach(function(v, k){
       models[v] = require('./models/' + v.toLowerCase())(db);
     });

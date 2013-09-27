@@ -2,6 +2,7 @@ var orm = require('orm');
 var ex = require('lodash');
 var rnds = require('randomstring');
 var crypto = require('crypto');
+var moment = require('moment');
 
 module.exports = exports = function(db) {
 
@@ -24,7 +25,8 @@ module.exports = exports = function(db) {
       return r;
     }
 
-    var User = db.define('users', {
+    var fields = {
+      id          : Number,
       group_id    : { type: 'number', defaultValue: 0, rational: false },
       is_admin    : { type: 'boolean', defaultValue: false},
       name        : { type: 'text', require: true },
@@ -34,14 +36,16 @@ module.exports = exports = function(db) {
       phone       : { type: 'text', unique: true, require: true },
       created_at  : Date,
       updated_at  : Date
-    },{
+    };
+
+    var User = db.define('users', fields,{
       methods: {
         checkPassword: function(password){
           return this.password == encryptPassword(password, this.getSalt());
         },
         //获取盐值，没有则自动创建
         getSalt: function(){
-          if(this.salt == ''){
+          if(!this.salt || this.salt == ''){
             //生成随机盐值
             this.salt = rnds.generate(6);
           }
@@ -53,7 +57,10 @@ module.exports = exports = function(db) {
       },
       hooks: {
         beforeCreate: function (next) {
-          setPassword(this.password);
+          var now = moment();
+          this.setPassword(this.password);
+          this.created_at = now.format();
+          this.updated_at = now.format();
           next();
         }
       },
@@ -64,6 +71,12 @@ module.exports = exports = function(db) {
 
     User.encryptPassword = encryptPassword;
 
+    User.safeFields = function(){
+      return ex.filter(ex.keys(fields), function(key){
+        return key != 'salt' && key != 'password';
+      });
+    };
+
     /*
      * 使用用户名、密码登陆
      * param String username
@@ -71,14 +84,16 @@ module.exports = exports = function(db) {
      * param Function cb(err, user)
      */
     User.login = function(username, password, cb){
-      User.find(guessName(uesername), 1, function(err, user){
+      this.find(guessName(uesername), 1, function(err, user){
         if(err || (user && user.checkPassword(password))){
           cb(true, null);
         }else{
           cb(false, user);
         }
       });
-    }
+    };
+
+
 
     return User;
 
