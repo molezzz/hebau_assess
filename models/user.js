@@ -58,8 +58,14 @@ module.exports = exports = function(db) {
       hooks: {
         beforeCreate: function (next) {
           var now = moment();
-          this.setPassword(this.password);
+          var password = (!this.password || this.password == '') ? this.phone : this.password;
+
+          this.setPassword(password);
           this.created_at = now.format();
+          next();
+        },
+        beforeSave: function(next){
+          var now = moment();
           this.updated_at = now.format();
           next();
         }

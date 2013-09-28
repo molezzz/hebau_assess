@@ -29,13 +29,13 @@
         <div class="collapse navbar-collapse navbar-ex1-collapse">
           <div class="navbar-left">
             <button type="button" class="btn btn-default navbar-btn" ng-click="newUser()">添加</button>
-            <button type="button" class="btn btn-warning navbar-btn">删除</button>
+            <button type="button" class="btn btn-danger navbar-btn">删除</button>
           </div>
           <form class="navbar-form navbar-right" role="search">
             <div class="form-group">
-              <input type="text" class="form-control" placeholder="输入人名">
+              <input type="text" class="form-control" placeholder="输入人名" ng-model="filter"/>
             </div>
-            <button type="submit" class="btn btn-default">搜索</button>
+            <button type="submit" class="btn btn-default" ng-click="loadData()">搜索</button>
           </form>
 
         </div><!-- /.navbar-collapse -->
@@ -58,7 +58,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="user in users">
+            <tr ng-repeat="user in users | filter: { name: filter}">
               <td><input type="checkbox" ng-model="user.checked" ng-checked="user.checked"/></td>
               <td>{{ user.id }}</td>
               <td>{{ user.name }}</td>
@@ -66,7 +66,18 @@
               <td>{{ user.email }}</td>
               <td>{{ user.phone }}</td>
               <td>{{ user.created_at | date:'yyyy-MM-dd' }}</td>
-              <td></td>
+              <td>
+                <div class="pull-right">
+                  <div class="btn-group">
+                    <a href="#edit" class="btn btn-default btn-sm glyphicon glyphicon-edit" title="编辑" ng-click="editUser(user)"></a>
+                    <a href="#resetUserPwd" class="btn btn-default btn-sm glyphicon glyphicon-random" title="重置密码" ng-click="resetUserPwd(user)"></a>
+                  </div>
+
+                  <div class="btn-group">
+                    <a href="#delete" class="btn btn-danger btn-sm glyphicon glyphicon-trash" title="删除员工" ng-click="delUser(user)"></a>
+                  </div>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -132,8 +143,8 @@
           </div>
           <div class="form-group">
             <label>所属机构</label>
-            <input type="text" name="department" ng-model="user.department"  class="form-control" required placeholder="number">
-            <p ng-show="post && user_form.department.$error.required" class="help-block">
+            <input type="text" name="group_id" ng-model="user.group_id"  class="form-control" required placeholder="number">
+            <p ng-show="post && user_form.group_id.$error.required" class="help-block">
               <span class="label label-danger">所属机构 不能为空！</span>
             </p>
           </div>
@@ -165,10 +176,15 @@ app.controller('UsersCtrl', ['$scope', '$dialog', '$http', function($scope, $dia
 
   $scope.users = [];
   $scope.loading = false;
+  $scope.filter = '';
 
   $scope.loadData = function(){
+    var query = {};
     $scope.loading = true;
-    $http.get('/admin/users.json')
+    if($scope.filter != ''){
+      query['q[name_like]'] = $scope.filter;
+    };
+    $http.get('/admin/users.json?' + $.param(query))
          .success(function(json, status, headers, config) {
             $scope.users = json.users;
             $scope.loading = false;
@@ -180,14 +196,52 @@ app.controller('UsersCtrl', ['$scope', '$dialog', '$http', function($scope, $dia
          });
   };
 
-  $scope.newUser = function(){
+
+  $scope.delUser = function(user){
+    if(confirm('删除用户，将删除该用户的所有关联数据.\n确实要删除“'+ user.name +'"')){
+      $http.delete('/admin/users/'+ user.id)
+            .success(function(json, status, headers, config) {
+                if(json && json.success){
+                  alert(json.msg);
+                  $scope.loadData();
+                }else{
+                  alert(json.msg);
+                }
+             })
+             .error(function(data, status, headers, config) {
+                alert(data);
+                console.log(data);
+             });
+    }
+  }
+
+  $scope.editUser = function(user){
     var data = {
-      title: '添加员工',
-      users: $scope.users
+      title: '修改员工信息',
+      user: user,
+      edit: true,
+      callback: function(){
+        $scope.loadData();
+      }
     }
     var d = $dialog.dialog($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
     d.open();
   };
+
+  $scope.newUser = function(){
+    var data = {
+      title: '添加员工',
+      callback: function(){
+        $scope.loadData();
+      }
+    }
+    var d = $dialog.dialog($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
+    d.open();
+  };
+
+  $scope.resetUserPwd = function(user){
+
+  }
 
   $scope.loadData();
 }]);
@@ -202,17 +256,30 @@ app.controller('NewUserCtrl',['$scope', 'dialog', 'data', '$http', function($sco
   }
 
   $scope.submit = function(){
-    $scope.post = true;
     if($scope.user_form.$invalid){ return false;}
-    $http.post('/admin/users/', { user: $scope.user})
-         .success(function(json, status, headers, config) {
-            alert('添加成功！');
-            data.users.unshift($scope.user);
-            $scope.close();
-         })
-         .error(function(json, status, headers, config) {
+    var config = { method: 'POST', url: '/admin/users/', data: { user: $scope.user}};
+    $scope.post = true;
 
-         });
+    if(data.edit){
+      config.method = 'PUT';
+      config.url = '/admin/users/' + $scope.user.id;
+    }
+
+    $http(config).success(function(json, status, headers, config) {
+                    if(json && json.success){
+                      alert(json.msg);
+                      if(data.callback){
+                        data.callback();
+                      }
+                      $scope.close();
+                    }else{
+                      alert(json.msg);
+                    }
+                 })
+                 .error(function(data, status, headers, config) {
+                    alert(data);
+                    console.log(data);
+                 });
   }
 
 }]);

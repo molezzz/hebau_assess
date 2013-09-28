@@ -14,7 +14,9 @@ var passport = require('passport');
 var orm = require('orm');
 var ex = require('lodash');
 var Resource = require('express-resource');
-var paging = require("orm-paging");
+//var paging = require('orm-paging');
+var paging = require('./lib/orm-paginate');
+var metaSearch = require('./lib/orm-metasearch');
 
 var app = express();
 
@@ -23,7 +25,7 @@ var dbConfig = {
   production: {
     database: "assess",
     protocol: "mysql",
-    host: "192.168.3.2",
+    host: "molezz.db",
     username: "bdall",
     password: "bdall",
     query: {
@@ -50,6 +52,7 @@ app.use(express.methodOverride());
 app.use(orm.express(dbConfig[app.get('env')],{
   define: function (db, models, next) {
     db.use(paging);
+    db.use(metaSearch);
 
     ex(['User', 'Group']).forEach(function(v, k){
       models[v] = require('./models/' + v.toLowerCase())(db);
