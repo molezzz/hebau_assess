@@ -26,7 +26,7 @@ module.exports = exports = function(db) {
     }
 
     var fields = {
-      id          : Number,
+      id          : { type: 'number', unsigned: true, rational: false, autoIncrement: true },
       group_id    : { type: 'number', defaultValue: 0, rational: false },
       is_admin    : { type: 'boolean', defaultValue: false},
       name        : { type: 'text', require: true },
@@ -38,7 +38,8 @@ module.exports = exports = function(db) {
       updated_at  : Date
     };
 
-    var User = db.define('users', fields,{
+    var User = db.define('users', fields, {
+      timestamp: true,
       methods: {
         checkPassword: function(password){
           return this.password == encryptPassword(password, this.getSalt());
@@ -57,18 +58,17 @@ module.exports = exports = function(db) {
       },
       hooks: {
         beforeCreate: function (next) {
-          var now = moment();
           var password = (!this.password || this.password == '') ? this.phone : this.password;
 
           this.setPassword(password);
-          this.created_at = now.format();
+          // this.created_at = moment().format();
           next();
-        },
+        }/*,
         beforeSave: function(next){
-          var now = moment();
-          this.updated_at = now.format();
+          // var now = moment();
+          // this.updated_at = now.format();
           next();
-        }
+        }*/
       },
       validations: {
 

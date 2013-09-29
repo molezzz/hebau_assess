@@ -47,7 +47,7 @@
       <div class="collapse navbar-collapse navbar-ex8-collapse">
         <ul class="nav navbar-nav">
           <li class="<%= typeof dashboardMenuActive == 'undefined' ? '' : 'active'%>"><a href="#">首页</a></li>
-          <li class="<%= typeof userMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/users">员工</a></li>
+          <li class="<%= typeof userMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/users">用户</a></li>
           <li class="<%= typeof departmentMenuActive == 'undefined' ? '' : 'active' %>"><a href="#">部门</a></li>
           <li class="<%= typeof ruleMenuActive == 'undefined' ? '' : 'active' %>"><a href="#">规则</a></li>
         </ul>
@@ -57,6 +57,6 @@
     <div id="mainBody" style="padding: 64px 20px 0;">
       <%- body %>
     </div>
-    <div id="bottomNav" class="navbar navbar-default navbar-fixed-bottom"></div>
+    <!--div id="bottomNav" class="navbar navbar-default navbar-fixed-bottom"></div-->
   </body>
 </html>

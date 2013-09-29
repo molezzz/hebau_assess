@@ -11,21 +11,25 @@ var admin = require('./routes/admin');
 var http = require('http');
 var path = require('path');
 var passport = require('passport');
+var moment = require('moment');
 var orm = require('orm');
+//var paging = require('orm-paging');
+//var modts = require('orm-timestamps');
 var ex = require('lodash');
 var Resource = require('express-resource');
-//var paging = require('orm-paging');
 var paging = require('./lib/orm-paginate');
 var metaSearch = require('./lib/orm-metasearch');
+var modts = require('./lib/orm-timestamps');
+
 
 var app = express();
 
 var dbConfig = {
-  development: 'mysql://bdall:bdall@192.168.3.2/assess?pool=true&debug=true',
+  development: 'mysql://hebau:hebau@localhost/assess?pool=true&debug=true',
   production: {
     database: "assess",
     protocol: "mysql",
-    host: "molezz.db",
+    host: 'localhost', //"molezz.db",
     username: "bdall",
     password: "bdall",
     query: {
@@ -53,6 +57,14 @@ app.use(orm.express(dbConfig[app.get('env')],{
   define: function (db, models, next) {
     db.use(paging);
     db.use(metaSearch);
+    db.use(modts, {
+        createdProperty: 'created_at',
+        modifiedProperty: 'updated_at',
+        dbtype: { type: 'date', time: true },
+        now: function() {
+          return moment().format('YYYY-MM-DD HH:mm:ss');
+        }
+    });
 
     ex(['User', 'Group']).forEach(function(v, k){
       models[v] = require('./models/' + v.toLowerCase())(db);
@@ -73,7 +85,7 @@ app.configure('production', function(){
 });
 app.locals.inspect = require('util').inspect;
 
-//app.get('/setup', routes.setup);
+app.get('/admin/setup', routes.setup);
 app.get('/admin/login', admin.login);
 app.get('/admin/dashboard', admin.index);
 app.resource('admin/users', require('./routes/admin/user'));

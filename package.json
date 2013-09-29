@@ -20,6 +20,8 @@
     "express-resource": "*",
     "moment": "*",
     "moment-timezone": "*",
-    "orm-paging": "*"
+    "orm-paging": "*",
+    "orm-transaction": "*",
+    "orm-timestamps": "*"
   }
 }

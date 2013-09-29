@@ -22,22 +22,28 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">员工管理</a>
+          <a class="navbar-brand" href="#">系统用户管理</a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse navbar-ex1-collapse">
-          <div class="navbar-left">
-            <button type="button" class="btn btn-default navbar-btn" ng-click="newUser()">添加</button>
-            <button type="button" class="btn btn-danger navbar-btn">删除</button>
+        <div class="collapse navbar-collapse">
+          <div class="btn-group navbar-left" >
+            <button type="button" class="btn btn-default navbar-btn btn-sm" ng-click="newUser()"><span class="glyphicon glyphicon-plus-sign"></span> 添加</button>
+            <button type="button" class="btn btn-danger navbar-btn btn-sm"><span class="glyphicon glyphicon-trash"></span> 删除</button>
           </div>
+
+          <div class="btn-group navbar-right">
+            <button type="button" title="刷新" class="btn btn-default navbar-btn btn-sm" ng-click="loadData()"><span class="glyphicon glyphicon-refresh"></span></button>
+            <button type="button" title="批量导入" class="btn btn-default navbar-btn btn-sm"><span class="glyphicon glyphicon-cloud-upload"></span></button>
+            <button type="button" title="导出结果列表" class="btn btn-default navbar-btn btn-sm"><span class="glyphicon glyphicon-cloud-download"></span></button>
+          </div>
+
           <form class="navbar-form navbar-right" role="search">
             <div class="form-group">
-              <input type="text" class="form-control" placeholder="输入人名" ng-model="filter"/>
+              <input type="text" class="form-control input-sm" placeholder="输入人名" ng-model="filter"/>
             </div>
-            <button type="submit" class="btn btn-default" ng-click="loadData()">搜索</button>
+            <button type="submit" class="btn btn-default btn-sm" ng-click="loadData()">搜索</button>
           </form>
-
         </div><!-- /.navbar-collapse -->
       </div>
     </div>
@@ -105,7 +111,21 @@
       </div>
     </div>
   </div><!-- col-md-2 -->
-
+  <div class="navbar navbar-default navbar-fixed-bottom">
+    <div class="collapse navbar-collapse">
+       <ul class="pagination navbar-left">
+        <li class="disabled"><a href="#">«</a></li>
+        <li class="active"><a href="#">1 <span class="sr-only">(current)</span></a></li>
+        <li><a href="#">2</a></li>
+        <li><a href="#">3</a></li>
+        <li><a href="#">4</a></li>
+        <li><a href="#">5</a></li>
+        <li><a href="#">»</a></li>
+       </ul>
+       <div class="navbar-right">
+       </div>
+    </div>
+  </div>
 </div>
 
 <script type="text/ng-template" id="newUserDialog.tpl">
@@ -256,9 +276,9 @@ app.controller('NewUserCtrl',['$scope', 'dialog', 'data', '$http', function($sco
   }
 
   $scope.submit = function(){
+    $scope.post = true;
     if($scope.user_form.$invalid){ return false;}
     var config = { method: 'POST', url: '/admin/users/', data: { user: $scope.user}};
-    $scope.post = true;
 
     if(data.edit){
       config.method = 'PUT';

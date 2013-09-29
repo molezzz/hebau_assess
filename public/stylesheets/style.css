@@ -52,3 +52,7 @@ a {
   margin: -20px 0 0 -300px;
   z-index: 2001;
 }
+
+.navbar .pagination {
+  margin: 10px 0;
+}

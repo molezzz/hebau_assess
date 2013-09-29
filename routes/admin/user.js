@@ -21,7 +21,7 @@ exports.index = function(req, res){
         });
         break;
       default:
-        res.render('admin/user/index', ex.extend({ title: '人员管理' }, shared));
+        res.render('admin/user/index', ex.extend({ title: '用户管理' }, shared));
   }
 };
 
@@ -38,7 +38,7 @@ exports.create = function(req, res){
 
   req.models.User.create(user, function(err, items){
     if(err){
-      result.msg = error;
+      result.msg = err;
     }else{
       result.success = true;
       result.msg = '新用户添加成功！';
