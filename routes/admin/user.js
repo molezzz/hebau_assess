@@ -3,21 +3,26 @@
  */
 var ex = require('lodash');
 var moment = require('moment');
+var orm = require('../../lib/seq-models');
 
 var shared = {
   userMenuActive: 'active'
 };
 
 exports.index = function(req, res){
-  var User = req.models.User;
+  var User = orm.models('user');
+  console.log(User);
   var page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
   switch (req.format) {
       case 'json':
-        User.search(req.query.q || {}).pages(function(err, totalPages){
-          this.page(page).only(User.safeFields())
-              .order('-created_at').run(function(err, users){
-                res.json({ totalPages: totalPages, users: users });
-              });
+        // User.search(req.query.q || {}).pages(function(err, totalPages){
+        //   this.page(page).only(User.safeFields())
+        //       .order('-created_at').run(function(err, users){
+        //         res.json({ totalPages: totalPages, users: users });
+        //       });
+        // });
+        User.findAll().success(function(users){
+          res.json({ totalPages: 1, users: users });
         });
         break;
       default:

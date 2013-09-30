@@ -13,15 +13,12 @@
     "passport": "*",
     "passport-local": "*",
     "mysql": "2.x",
-    "orm": "*",
     "lodash": "*",
     "randomstring": "*",
     "validator": "*",
     "express-resource": "*",
     "moment": "*",
     "moment-timezone": "*",
-    "orm-paging": "*",
-    "orm-transaction": "*",
-    "orm-timestamps": "*"
+    "sequelize": "*"
   }
 }

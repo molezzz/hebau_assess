@@ -19,15 +19,16 @@ var orm = require('orm');
 //var modts = require('orm-timestamps');
 var ex = require('lodash');
 var Resource = require('express-resource');
-var paging = require('./lib/orm-paginate');
-var metaSearch = require('./lib/orm-metasearch');
-var modts = require('./lib/orm-timestamps');
+var orm = require('./lib/seq-models');
+
 
 
 var app = express();
 
 var dbConfig = {
-  development: 'mysql://hebau:hebau@localhost/assess?pool=true&debug=true',
+  development: 'mysql://hebau:hebau@localhost/assess',
+  /*
+  //ORM2
   production: {
     database: "assess",
     protocol: "mysql",
@@ -39,9 +40,11 @@ var dbConfig = {
         debug: false
     }
   },
-  test: 'mysql://bdall:bdall@192.168.3.2/assess?pool=true&debug=true'
+  */
+  production: 'mysql://hebau:hebau@localhost/assess',
+  test: 'mysql://bdall:bdall@192.168.3.2/assess'
 };
-
+orm.setup(__dirname + '/models', dbConfig[app.get('env')]);
 // all environments
 app.engine('ejs', engine);
 app.set('port', process.env.PORT || 3000);
@@ -55,24 +58,6 @@ app.use(express.cookieSession({ key:'hebau_assess_sess', secret: '9a63f01779e0f8
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.methodOverride());
-app.use(orm.express(dbConfig[app.get('env')],{
-  define: function (db, models, next) {
-    db.use(paging);
-    db.use(metaSearch);
-    db.use(modts, {
-        createdProperty: 'created_at',
-        modifiedProperty: 'updated_at',
-        dbtype: { type: 'date', time: true },
-        now: function() {
-          return moment().format('YYYY-MM-DD HH:mm:ss');
-        }
-    });
-
-    ex(['User', 'Group']).forEach(function(v, k){
-      models[v] = require('./models/' + v.toLowerCase())(db);
-    });
-  }
-}));
 app.use(app.router);
 app.use(require('less-middleware')({ src: __dirname + '/public' }));
 app.use(express.static(path.join(__dirname, 'public')));
