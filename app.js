@@ -8,6 +8,8 @@ var engine = require('ejs-locals')
 var routes = require('./routes');
 var user = require('./routes/user');
 var admin = require('./routes/admin');
+var adminUser = require('./routes/admin/user');
+
 var http = require('http');
 var path = require('path');
 var passport = require('passport');
@@ -88,7 +90,8 @@ app.locals.inspect = require('util').inspect;
 app.get('/admin/setup', routes.setup);
 app.get('/admin/login', admin.login);
 app.get('/admin/dashboard', admin.index);
-app.resource('admin/users', require('./routes/admin/user'));
+app.resource('admin/users', adminUser);
+app.post('/admin/user/reset/password', adminUser.resetPassword);
 app.get('/users', user.list);
 app.get('/', routes.index);
 

@@ -87,17 +87,11 @@ exports.update = function(req, res){
 };
 
 exports.destroy = function(req, res){
-  var userId = req.params.user;
+  var users = req.params.user.split('-');
   var User = req.models.User;
   var result = {success: false, msg: ''};
 
-  User.get(userId, function(err, user){
-    if(err){
-      result.msg = '删除失败! 用户不存在！';
-      res.json(result);
-      return;
-    }
-    user.remove(function(err){
+  User.find({id: users}).remove(function(err){
       if(err){
         result.msg = '删除失败! 写入数据库出错！';
         res.json(result);
@@ -107,7 +101,35 @@ exports.destroy = function(req, res){
       result.success = true;
       res.json(result);
     });
-
-  });
-
 };
+
+exports.resetPassword = function(req, res){
+  var uid = req.query.uid;
+  var password = req.body.password;
+  var result = {success: false, msg: '密码不能为空！'};
+  if(password && password != ''){
+    var User = req.models.User;
+    console.log(uid);
+    User.get(uid, function(err, user){
+      if(err){
+        result.msg = '更新失败! 用户不存在！';
+        res.json(result);
+        return;
+      }
+      user.setPassword(password);
+      user.save(function(err){
+        if(err){
+          result.msg = '更新失败! 写入数据库出错！';
+          res.json(result);
+          return;
+        }
+        result.msg = '密码已修改为：“ '+ password +' ”';
+        result.success = true;
+        res.json(result);
+      });
+
+    });
+  }else{
+    req.json(result);
+  }
+}

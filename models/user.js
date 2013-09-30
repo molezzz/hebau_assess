@@ -26,7 +26,7 @@ module.exports = exports = function(db) {
     }
 
     var fields = {
-      id          : { type: 'number', unsigned: true, rational: false, autoIncrement: true },
+      id          : { type: 'number', unsigned: true, rational: false},
       group_id    : { type: 'number', defaultValue: 0, rational: false },
       is_admin    : { type: 'boolean', defaultValue: false},
       name        : { type: 'text', require: true },
