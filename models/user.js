@@ -44,7 +44,7 @@ module.exports = {
       beforeCreate: function(user, next){
         var password = (!user.password || user.password == '') ? user.phone : user.password;
         user.setPassword(password);
-        next(null, user);
+        return next();
       }
     },
     classMethods: {
