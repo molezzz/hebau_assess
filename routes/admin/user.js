@@ -11,7 +11,6 @@ var shared = {
 
 exports.index = function(req, res){
   var User = orm.model('user');
-  var page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
   switch (req.format) {
       case 'json':
         // User.search(req.query.q || {}).pages(function(err, totalPages){
@@ -20,8 +19,9 @@ exports.index = function(req, res){
         //         res.json({ totalPages: totalPages, users: users });
         //       });
         // });
-        User.findAll().success(function(users){
-          res.json({ totalPages: 1, users: users });
+        var opts = User.pages(req.query.page, req.query.prepage);
+        User.search(req.query.q || {}, opts).success(function(users){
+          res.json({ total: users.count, users: users.rows });
         });
         break;
       default:
