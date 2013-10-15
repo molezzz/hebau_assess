@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel='stylesheet' href='/stylesheets/style.css' />
     <link rel='stylesheet' href='/stylesheets/bootstrap.min.css' />
-    <link rel='stylesheet' href='/stylesheets/bootstrap-theme.min.css' />
+    <!-- link rel='stylesheet' href='/stylesheets/bootstrap-theme.min.css' /-->
     <!--link rel='stylesheet' href='/stylesheets/bootstrap-flat-theme.css' /-->
     <script type="text/javascript" src="/javascripts/jquery.min.js"></script>
     <script type="text/javascript" src="/javascripts/angular/angular.min.js"></script>
@@ -49,7 +49,7 @@
         <ul class="nav navbar-nav">
           <li class="<%= typeof dashboardMenuActive == 'undefined' ? '' : 'active'%>"><a href="#">首页</a></li>
           <li class="<%= typeof userMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/users">用户</a></li>
-          <li class="<%= typeof departmentMenuActive == 'undefined' ? '' : 'active' %>"><a href="#">部门</a></li>
+          <li class="<%= typeof departmentMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/departments">部门</a></li>
           <li class="<%= typeof ruleMenuActive == 'undefined' ? '' : 'active' %>"><a href="#">规则</a></li>
         </ul>
       </div><!-- /.navbar-collapse -->

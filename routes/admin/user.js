@@ -13,13 +13,8 @@ exports.index = function(req, res){
   var User = orm.model('user');
   switch (req.format) {
       case 'json':
-        // User.search(req.query.q || {}).pages(function(err, totalPages){
-        //   this.page(page).only(User.safeFields())
-        //       .order('-created_at').run(function(err, users){
-        //         res.json({ totalPages: totalPages, users: users });
-        //       });
-        // });
         var opts = User.pages(req.query.page, req.query.prepage);
+        opts.order = 'id DESC';
         User.search(req.query.q || {}, opts).success(function(users){
           res.json({ total: users.count, users: users.rows });
         });
@@ -139,6 +134,6 @@ exports.resetPassword = function(req, res){
           res.json(result);
         });
   }else{
-    req.json(result);
+    res.json(result);
   }
 }
