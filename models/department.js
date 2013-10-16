@@ -1,6 +1,13 @@
 var orm = require('../lib/seq-models');
 var Seq = orm.Seq();
+var ex = require('lodash');
 
+var cates = {
+  '1': '教学单位',
+  '2': '党群部门',
+  '3': '科研教辅',
+  '0': '其他',
+}
 // see https://github.com/sequelize/sequelize/pull/894
 // (1) beforeValidate(dao, fn)
 
@@ -22,12 +29,27 @@ module.exports = {
   model: {
     id: { type: Seq.INTEGER, autoIncrement: true, primaryKey: true },
     parent_id: { type: Seq.INTEGER, allowNull: false, defaultValue: 0 },
-    name: { type: Seq.STRING, allowNull: false }
+    name: { type: Seq.STRING, allowNull: false },
+    category_id: { type: Seq.ENUM, values: ['0', '1', '2', '3'], allowNull: false, defaultValue: '0'}
   },
   relations: {
 
   },
   options: {
-    timestamps: true
+    timestamps: true,
+    classMethods: {
+      /**
+       * 返回所有的类别
+       * @return {Hash}
+       */
+      cates: function(){
+        return ex.clone(cates);
+      }
+    },
+    instanceMethods: {
+      getCateName: function(){
+        return cates[this.category_id] || '未知';
+      }
+    }
   }
 };

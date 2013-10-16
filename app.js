@@ -27,7 +27,8 @@ var orm = require('./lib/seq-models');
 var app = express();
 
 var dbConfig = {
-  development: 'mysql://sql419985:fB4*dI1%25@sql4.freemysqlhosting.net/sql419985',
+  development: 'mysql://hebau:hebau@localhost/assess',
+  //development: 'mysql://sql419985:fB4*dI1%25@sql4.freemysqlhosting.net/sql419985',
   /*
   //ORM2
   production: {

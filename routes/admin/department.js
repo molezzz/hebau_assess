@@ -20,7 +20,9 @@ exports.index = function(req, res){
         });
         break;
       default:
-        res.render('admin/department/index', ex.extend({ title: '部门管理' }, shared));
+        res.render('admin/department/index',
+          ex.extend({ title: '部门管理', cates: Department.cates() }, shared)
+        );
   }
 };
 
@@ -66,7 +68,7 @@ exports.update = function(req, res){
   var result = {success: false, msg: ''};
 
   Department.find(departmentId).success(function(department){
-    department.updateAttributes(req.body.department, ['name', 'email', 'phone', 'group_id'])
+    department.updateAttributes(req.body.department, ['name', 'category_id', 'parent_id'])
         .success(function(){
           result.msg = '更新成功';
           result.success = true;

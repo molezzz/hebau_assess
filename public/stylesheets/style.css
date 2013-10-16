@@ -53,6 +53,10 @@ a {
   z-index: 2001;
 }
 
-.navbar .pagination {
+.navbar .pagination, .navbar .pager {
   margin: 10px 0;
+}
+
+.navbar .pager a {
+  cursor: pointer;
 }

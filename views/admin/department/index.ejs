@@ -40,10 +40,16 @@
 
           <form class="navbar-form navbar-right" role="search">
             <div class="form-group">
-              <input type="text" class="form-control input-sm" placeholder="输入部门名称" ng-model="filter"/>
+              <input type="text" class="form-control input-sm" placeholder="输入部门名称" ng-model="filter.name"/>
             </div>
             <button type="submit" class="btn btn-default btn-sm" ng-click="loadData()">搜索</button>
           </form>
+
+          <div class="btn-group navbar-right">
+            <button type="button" class="btn btn-default navbar-btn btn-sm" ng-model="filter.category" btn-radio="'ALL'">全部</button>
+            <button ng-repeat="(key, value) in cates" type="button" class="btn btn-default navbar-btn btn-sm" ng-model="filter.category" btn-radio="{{key}}">{{value}}</button>
+          </div>
+
         </div><!-- /.navbar-collapse -->
       </div>
     </div>
@@ -55,15 +61,17 @@
             <tr>
               <th></th>
               <th>#</th>
-              <th>名称</th>
+              <th>类别</th>
+              <th>部门名称</th>
               <th>创建时间</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="dep in deps | filter: { name: filter}">
+            <tr ng-repeat="dep in deps | filter: { name: filter.name}">
               <td><input type="checkbox" ng-model="dep.checked" ng-checked="dep.checked"/></td>
               <td>{{ dep.id }}</td>
+              <td ng-bind-html-unsafe="dep.category_id | cateName"></td>
               <td>{{ dep.name }}</td>
               <td>{{ dep.createdAt | date:'yyyy-MM-dd' }}</td>
               <td>
@@ -86,8 +94,12 @@
 
   </div><!-- col-md-12 -->
   <div class="navbar navbar-default navbar-fixed-bottom">
+    <div class="navbar-header">
+      <span class="navbar-brand">总计: {{ depsTotal }} 条记录 第{{ filter.page }}页/共{{ numPages() }}页</span>
+    </div>
     <div class="collapse navbar-collapse">
        <div class="navbar-right">
+        <pager total-items="depsTotal" current-page="filter.page" max-size="15" class="pagination-small" boundary-links="true" rotate="false" items-per-page="perpage" previous-text="'&laquo;上一页'" next-text="'下一页&raquo;'" num-pages="numPages()"></pager>
        </div>
     </div>
   </div>
@@ -102,6 +114,15 @@
       </div>
       <div class="modal-body">
         <form name="dep_form" role="form">
+          <div class="form-group">
+            <label>所属类别</label>
+            <select name="category_id" ng-model="dep.category_id" ng-options="c.v as c.name for c in cates" class="form-control" required >
+              <option value="">选择类别</option>
+            </select>
+            <p ng-show="post && dep_form.category_id.$error.required" class="help-block">
+              <span class="label label-danger">请选择所属类别！</span>
+            </p>
+          </div>
           <div class="form-group">
             <label>部门名称</label>
             <input type="text" name="name" ng-model="dep.name" class="form-control" required placeholder="填写姓名">
@@ -120,7 +141,19 @@
 </script>
 <script type="text/javascript">
 (function($){
+var cates = <%- JSON.stringify(cates) %>;
 var app = angular.module('heba.admin.deps', ['ui.bootstrap'], angular.noop);
+app.filter('cateName', function(){
+  var labels = {
+    '0': 'default',
+    '1': 'primary',
+    '2': 'info',
+    '3': 'success'
+  }
+  return function(val){
+    return '<span class="label label-'+labels[val]+'">'+ cates[val] +'</span>'
+  }
+});
 app.controller('DepsCtrl', ['$scope', '$dialog', '$http', function($scope, $dialog, $http){
   var opts = {
     backdrop: true,
@@ -136,26 +169,11 @@ app.controller('DepsCtrl', ['$scope', '$dialog', '$http', function($scope, $dial
   };
 
   $scope.deps = [];
+  $scope.depsTotal = 0;
   $scope.loading = false;
-  $scope.filter = '';
-
-  $scope.loadData = function(){
-    var query = {};
-    $scope.loading = true;
-    if($scope.filter != ''){
-      query['q[name_like]'] = $scope.filter;
-    };
-    $http.get('/admin/departments.json?' + $.param(query))
-         .success(function(json, status, headers, config) {
-            $scope.deps = json.departments;
-            $scope.loading = false;
-         })
-         .error(function(data, status, headers, config) {
-            alert(data);
-            console.log(data);
-            $scope.loading = false;
-         });
-  };
+  $scope.filter = { name: '', category: 'ALL', page: 1 };
+  $scope.cates = cates;
+  $scope.perpage = 20;
 
   $scope.delAll = function(){
     var deps = [];
@@ -217,6 +235,33 @@ app.controller('DepsCtrl', ['$scope', '$dialog', '$http', function($scope, $dial
     d.open();
   };
 
+  $scope.loadData = function(keepPage){
+    var query = {};
+    $scope.loading = true;
+    if($scope.filter.name != ''){
+      query['q[name_like]'] = $scope.filter.name;
+    };
+    if($scope.filter.category !== undefined && $scope.filter.category != 'ALL'){
+      query['q[category_id_eq]'] = $scope.filter.category;
+    };
+    if(!keepPage){
+      $scope.filter.page = 1;
+    }
+    query.page = $scope.filter.page;
+    query.perpage = $scope.perpage;
+    $http.get('/admin/departments.json?' + $.param(query))
+         .success(function(json, status, headers, config) {
+            $scope.deps = json.departments;
+            $scope.depsTotal = json.total;
+            $scope.loading = false;
+         })
+         .error(function(data, status, headers, config) {
+            alert(data);
+            console.log(data);
+            $scope.loading = false;
+         });
+  };
+
   $scope.newDep = function(){
     var data = {
       title: '添加部门',
@@ -228,6 +273,16 @@ app.controller('DepsCtrl', ['$scope', '$dialog', '$http', function($scope, $dial
     d.open();
   };
 
+  $scope.numPages = function(){
+    return Math.max(Math.ceil($scope.depsTotal / $scope.perpage), 1);
+  };
+
+  $scope.$watch('filter.category', function(to, from){
+    $scope.loadData();
+  });
+  $scope.$watch('filter.page', function(to, from){
+    $scope.loadData(true);
+  });
   $scope.loadData();
 }]);
 
@@ -235,6 +290,10 @@ app.controller('NewDepCtrl',['$scope', 'dialog', 'data', '$http', function($scop
   $scope.title = data.title || '';
   $scope.dep = $.extend({}, data.dep);
   $scope.post = false;
+  $scope.cates = [];
+  angular.forEach(cates, function(v, key){
+    $scope.cates.push({v: key, name: v});
+  });
 
   $scope.close = function(){
     dialog.close();
