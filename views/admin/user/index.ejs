@@ -122,14 +122,14 @@
 </div>
 
 <script type="text/ng-template" id="newUserDialog.tpl">
-  <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" ng-click="close()">&times;</button>
         <h4 class="modal-title">{{title}}</h4>
       </div>
       <div class="modal-body">
-        <form name="user_form" role="form">
+        <form name="user_form" novalidate role="form">
+          {{setForm(user_form)}}
           <div class="form-group">
             <label>姓名</label>
             <input type="text" name="name" ng-model="user.name" class="form-control" required placeholder="填写姓名">
@@ -168,18 +168,14 @@
         <button type="button" class="btn btn-primary" ng-click="submit()">保存</button>
       </div>
     </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
 </script>
 <script type="text/javascript">
 (function($){
 var app = angular.module('heba.admin.users', ['ui.bootstrap'], angular.noop);
-app.controller('UsersCtrl', ['$scope', '$dialog', '$http', function($scope, $dialog, $http){
+app.controller('UsersCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
   var opts = {
     backdrop: true,
     keyboard: true,
-    backdropClick: false,
-    dialogFade: true,
-    dialogClass: 'modal',
     templateUrl: 'newUserDialog.tpl',
     controller: 'NewUserCtrl',
     resolve: { data: function(){
@@ -265,8 +261,7 @@ app.controller('UsersCtrl', ['$scope', '$dialog', '$http', function($scope, $dia
         $scope.loadData();
       }
     }
-    var d = $dialog.dialog($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
-    d.open();
+    $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
   };
 
   $scope.newUser = function(){
@@ -276,8 +271,7 @@ app.controller('UsersCtrl', ['$scope', '$dialog', '$http', function($scope, $dia
         $scope.loadData();
       }
     }
-    var d = $dialog.dialog($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
-    d.open();
+    $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
   };
 
   $scope.resetUserPwd = function(user){
@@ -302,18 +296,23 @@ app.controller('UsersCtrl', ['$scope', '$dialog', '$http', function($scope, $dia
   $scope.loadData();
 }]);
 
-app.controller('NewUserCtrl',['$scope', 'dialog', 'data', '$http', function($scope, dialog, data, $http){
+app.controller('NewUserCtrl',['$scope', '$modalInstance', 'data', '$http', function($scope, modal, data, $http){
   $scope.title = data.title || '';
   $scope.user = $.extend({}, data.user);
   $scope.post = false;
 
+  //modal bug 无法获取自身scope的form
+  $scope.setForm = function(form){
+    $scope.userForm = form;
+  };
+
   $scope.close = function(){
-    dialog.close();
+    modal.close();
   }
 
   $scope.submit = function(){
     $scope.post = true;
-    if($scope.user_form.$invalid){ return false;}
+    if($scope.userForm.$invalid){ return false;}
     var config = { method: 'POST', url: '/admin/users/', data: { user: $scope.user}};
 
     if(data.edit){

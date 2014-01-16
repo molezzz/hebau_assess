@@ -12,8 +12,9 @@ module.exports = {
     items: { type: Seq.TEXT, allowNull: false, defaultValue: '{}', comment: '选项 {key: point}'}
   },
   relations: {
-    hasMany: ['rule', {as: 'children', foreignKey: 'parent_id', useJunctionTable: false}],
-    hasOne: ['rule', {as: 'parent', foreignKey: 'parent_id'}]
+    hasMany: ['rule', { as: 'children', foreignKey: 'parent_id', useJunctionTable: false }],
+    belongsTo: ['rule', { as: 'parent', foreignKey: 'parent_id' }],
+    belongsTo: ['project', { foreignKey: 'project_id' }]
   },
   options: {
     timestamps: true,

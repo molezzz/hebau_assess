@@ -33,7 +33,7 @@ module.exports = {
     category_id: { type: Seq.ENUM, values: ['0', '1', '2', '3'], allowNull: false, defaultValue: '0'}
   },
   relations: {
-
+    hasMany: ['member',{ as: 'members', foreignKey: 'department_id' }]
   },
   options: {
     timestamps: true,

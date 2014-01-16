@@ -30,7 +30,10 @@ module.exports = {
     group_id: { type: Seq.INTEGER, allowNull: false, defaultValue: 0 },
     is_admin: { type: Seq.BOOLEAN, defaultValue: true},
     name: { type: Seq.STRING, allowNull: false },
-    email: { type: Seq.STRING, allowNull:false, unique: true },
+    email: {
+      type: Seq.STRING, allowNull:false, unique: true,
+      validate: { notEmpty: true }
+    },
     phone: { type: Seq.STRING, unique: true },
     password: { type: Seq.STRING },
     salt: { type: Seq.STRING(6) }

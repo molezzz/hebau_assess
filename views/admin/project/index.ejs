@@ -1,7 +1,7 @@
 <% layout('../layout') -%>
 <% script('/javascripts/angular/ui-bootstrap.js') -%>
 
-<div class="row" ng-controller="DepsCtrl" style="height:100%;">
+<div class="row" ng-controller="PrjsCtrl" style="height:100%;">
   <div class="col-md-12 loading-wrap">
     <div class="loading-box" ng-show="loading">
       <div class="progress progress-striped active">
@@ -14,7 +14,7 @@
 
     <div class="row"  style="padding:0 10px;">
       <ul class="nav nav-tabs">
-        <li class="active"><a href="#">部门管理</a></li>
+        <li class="active"><a href="#">考评管理</a></li>
       </ul>
       <div class="navbar navbar-default" role="navigation" style="margin-top:3px;">
         <!-- Brand and toggle get grouped for better mobile display -->
@@ -30,7 +30,7 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse">
           <div class="btn-group navbar-left" >
-            <button type="button" class="btn btn-default navbar-btn btn-sm" ng-click="newDep()"><span class="glyphicon glyphicon-plus-sign"></span> 添加</button>
+            <button type="button" class="btn btn-default navbar-btn btn-sm" ng-click="newPrj()"><span class="glyphicon glyphicon-plus-sign"></span> 添加</button>
             <button type="button" class="btn btn-danger navbar-btn btn-sm" ng-click="delAll()"><span class="glyphicon glyphicon-trash"></span> 删除</button>
           </div>
 
@@ -68,20 +68,20 @@
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="dep in deps | filter: { name: filter.name}">
-              <td><input type="checkbox" ng-model="dep.checked" ng-checked="dep.checked"/></td>
-              <td>{{ dep.id }}</td>
-              <td ng-bind-html-unsafe="dep.category_id | cateName"></td>
-              <td>{{ dep.name }}</td>
-              <td>{{ dep.createdAt | date:'yyyy-MM-dd' }}</td>
+            <tr ng-repeat="prj in prjs | filter: { name: filter.name}">
+              <td><input type="checkbox" ng-model="prj.checked" ng-checked="prj.checked"/></td>
+              <td>{{ prj.id }}</td>
+              <td ng-bind-html-unsafe="prj.category_id | cateName"></td>
+              <td>{{ prj.name }}</td>
+              <td>{{ prj.createdAt | date:'yyyy-MM-dd' }}</td>
               <td>
                 <div class="pull-right">
                   <div class="btn-group">
-                    <a href="#edit" class="btn btn-default btn-sm glyphicon glyphicon-edit" title="编辑" ng-click="editDep(dep)"></a>
+                    <a href="#edit" class="btn btn-default btn-sm glyphicon glyphicon-edit" title="编辑" ng-click="editprj(prj)"></a>
                   </div>
 
                   <div class="btn-group">
-                    <a href="#delete" class="btn btn-danger btn-sm glyphicon glyphicon-trash" title="删除员工" ng-click="delDep(dep)"></a>
+                    <a href="#delete" class="btn btn-danger btn-sm glyphicon glyphicon-trash" title="删除员工" ng-click="delprj(prj)"></a>
                   </div>
                 </div>
               </td>
@@ -95,39 +95,48 @@
   </div><!-- col-md-12 -->
   <div class="navbar navbar-default navbar-fixed-bottom">
     <div class="navbar-header">
-      <span class="navbar-brand">总计: {{ depsTotal }} 条记录 第{{ filter.page }}页/共{{ numPages() }}页</span>
+      <span class="navbar-brand">总计: {{ prjsTotal }} 条记录 第{{ filter.page }}页/共{{ numPages() }}页</span>
     </div>
     <div class="collapse navbar-collapse">
        <div class="navbar-right">
-        <pagination total-items="depsTotal" items-per-page="perpage" page="filter.page" max-size="15" class="pagination-sm" boundary-links="true" rotate="false" previous-text="'&laquo;上一页'" next-text="'下一页&raquo;'" last-text="尾页" first-text="首页"></pagination>
+        <pagination total-items="prjsTotal" items-per-page="perpage" page="filter.page" max-size="15" class="pagination-sm" boundary-links="true" rotate="false" previous-text="'&laquo;上一页'" next-text="'下一页&raquo;'" last-text="尾页" first-text="首页"></pagination>
        </div>
     </div>
   </div>
 </div>
 
-<script type="text/ng-template" id="newDepDialog.tpl">
+<script type="text/ng-template" id="newPrjDialog.tpl">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" ng-click="close()">&times;</button>
         <h4 class="modal-title">{{title}}</h4>
       </div>
       <div class="modal-body">
-        <form name="dep_form" novalidate role="form">
-          {{setForm(dep_form)}}
+        <form name="prj_form" novalidate role="form">
+          {{setForm(prj_form)}}
           <div class="form-group">
-            <label>所属类别</label>
-            <select name="category_id" ng-model="dep.category_id" ng-options="c.v as c.name for c in cates" class="form-control" required >
-              <option value="">选择类别</option>
-            </select>
-            <p ng-show="post && dep_form.category_id.$error.required" class="help-block">
-              <span class="label label-danger">请选择所属类别！</span>
+            <label>考评名称</label>
+            <input type="text" name="name" ng-model="prj.name" class="form-control" required placeholder="填写考评名称">
+            <p ng-show="post && prj_form.name.$error.required" class="help-block">
+              <span class="label label-danger">考评名称 不能为空！</span>
             </p>
           </div>
           <div class="form-group">
-            <label>部门名称</label>
-            <input type="text" name="name" ng-model="dep.name" class="form-control" required placeholder="填写姓名">
-            <p ng-show="post && dep_form.name.$error.required" class="help-block">
-              <span class="label label-danger">部门名称 不能为空！</span>
+            <label>考评类别 （自评、互评）</label>
+            <select name="category" ng-model="prj.category" ng-options="c.v as c.name for c in cates" class="form-control" required >
+              <option value="">选择类别</option>
+            </select>
+            <p ng-show="post && prj_form.category.$error.required" class="help-block">
+              <span class="label label-danger">请选择考评类别！</span>
+            </p>
+          </div>
+          <div class="form-group">
+            <label>考评类型 （个人、班子）</label>
+            <select name="type" ng-model="prj.type" ng-options="t.v as t.name for t in types" class="form-control" required >
+              <option value="">选择类型</option>
+            </select>
+            <p ng-show="post && prj_form.type.$error.required" class="help-block">
+              <span class="label label-danger">请选择考评类型！</span>
             </p>
           </div>
         </form>
@@ -141,7 +150,8 @@
 <script type="text/javascript">
 (function($){
 var cates = <%- JSON.stringify(cates) %>;
-var app = angular.module('heba.admin.deps', ['ui.bootstrap'], angular.noop);
+var types = <%- JSON.stringify(types) %>;
+var app = angular.module('heba.admin.prjs', ['ui.bootstrap'], angular.noop);
 app.filter('cateName', function(){
   var labels = {
     '0': 'default',
@@ -153,37 +163,38 @@ app.filter('cateName', function(){
     return '<span class="label label-'+labels[val]+'">'+ cates[val] +'</span>'
   }
 });
-app.controller('DepsCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
+app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
   var opts = {
     backdrop: true,
     keyboard: true,
-    templateUrl: 'newDepDialog.tpl',
-    controller: 'NewDepCtrl',
+    templateUrl: 'newPrjDialog.tpl',
+    controller: 'NewPrjCtrl',
     resolve: { data: function(){
       return {};
     }}
   };
 
-  $scope.deps = [];
-  $scope.depsTotal = 0;
+  $scope.prjs = [];
+  $scope.prjsTotal = 0;
   $scope.loading = false;
   $scope.filter = { name: '', category: 'ALL', page: 1 };
   $scope.cates = cates;
+  $scope.types = types;
   $scope.perpage = 20;
 
   $scope.delAll = function(){
-    var deps = [];
-    angular.forEach($scope.deps, function(dep, key){
-      if(dep.checked) {
-        deps.push(dep.id);
+    var prjs = [];
+    angular.forEach($scope.prjs, function(prj, key){
+      if(prj.checked) {
+        prjs.push(prj.id);
       }
     });
-    if(deps.length < 1){
+    if(prjs.length < 1){
       alert('没有选择任何部门');
       return;
     }else{
-      if(confirm('确实要删除选定的'+ deps.length +'个部门吗？')){
-        $http.delete('/admin/departments/'+ deps.join('-'))
+      if(confirm('确实要删除选定的'+ prjs.length +'个部门吗？')){
+        $http.delete('/admin/projects/'+ prjs.join('-'))
             .success(function(json, status, headers, config) {
                 if(json && json.success){
                   alert(json.msg);
@@ -200,9 +211,9 @@ app.controller('DepsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
     }
   }
 
-  $scope.delDep = function(dep){
-    if(confirm('确实要删除“'+ dep.name +'"')){
-      $http.delete('/admin/departments/'+ dep.id)
+  $scope.delPrj = function(prj){
+    if(confirm('确实要删除“'+ prj.name +'"')){
+      $http.delete('/admin/projects/'+ prj.id)
             .success(function(json, status, headers, config) {
                 if(json && json.success){
                   alert(json.msg);
@@ -218,10 +229,10 @@ app.controller('DepsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
     }
   }
 
-  $scope.editDep = function(dep){
+  $scope.editPrj = function(prj){
     var data = {
       title: '重命名',
-      dep: dep,
+      prj: prj,
       edit: true,
       callback: function(){
         $scope.loadData();
@@ -244,10 +255,10 @@ app.controller('DepsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
     }
     query.page = $scope.filter.page;
     query.perpage = $scope.perpage;
-    $http.get('/admin/departments.json?' + $.param(query))
+    $http.get('/admin/projects.json?' + $.param(query))
          .success(function(json, status, headers, config) {
-            $scope.deps = json.departments;
-            $scope.depsTotal = json.total;
+            $scope.prjs = json.projects;
+            $scope.prjsTotal = json.total;
             $scope.loading = false;
          })
          .error(function(data, status, headers, config) {
@@ -257,9 +268,9 @@ app.controller('DepsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
          });
   };
 
-  $scope.newDep = function(){
+  $scope.newPrj = function(){
     var data = {
-      title: '添加部门',
+      title: '新增考评',
       callback: function(){
         $scope.loadData();
       }
@@ -268,44 +279,50 @@ app.controller('DepsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
   };
 
   $scope.numPages = function(){
-    return Math.max(Math.ceil($scope.depsTotal / $scope.perpage), 1);
+    return Math.max(Math.ceil($scope.prjsTotal / $scope.perpage), 1);
   };
 
   $scope.$watch('filter.category', function(to, from){
+    console.log(to);
     $scope.loadData();
   });
   $scope.$watch('filter.page', function(to, from){
     $scope.loadData(true);
   });
+
   $scope.loadData();
 }]);
 
-app.controller('NewDepCtrl',['$scope', '$modalInstance', 'data', '$http', function($scope, modal, data, $http){
+app.controller('NewPrjCtrl',['$scope', '$modalInstance', 'data', '$http', function($scope, dialog, data, $http){
   $scope.title = data.title || '';
-  $scope.dep = $.extend({}, data.dep);
+  $scope.prj = $.extend({}, data.prj);
   $scope.post = false;
   $scope.cates = [];
+  $scope.types = [];
   angular.forEach(cates, function(v, key){
     $scope.cates.push({v: key, name: v});
+  });
+  angular.forEach(types, function(v, key){
+    $scope.types.push({v: key, name: v});
   });
 
   //modal bug 无法获取自身scope的form
   $scope.setForm = function(form){
-    $scope.depForm = form;
+    $scope.prjForm = form;
   };
 
   $scope.close = function(){
-    modal.close();
+    dialog.close();
   }
 
   $scope.submit = function(){
     $scope.post = true;
-    if($scope.depForm.$invalid){ return false;}
-    var config = { method: 'POST', url: '/admin/departments/', data: { department: $scope.dep}};
+    if($scope.prjForm.$invalid){ return false;}
+    var config = { method: 'POST', url: '/admin/projects/', data: { prjartment: $scope.prj}};
 
     if(data.edit){
       config.method = 'PUT';
-      config.url = '/admin/departments/' + $scope.dep.id;
+      config.url = '/admin/projects/' + $scope.prj.id;
     }
 
     $http(config).success(function(json, status, headers, config) {
@@ -326,6 +343,6 @@ app.controller('NewDepCtrl',['$scope', '$modalInstance', 'data', '$http', functi
   }
 
 }]);
-angular.bootstrap(document.documentElement, ['heba.admin.deps']);
+angular.bootstrap(document.documentElement, ['heba.admin.prjs']);
 })(jQuery);
 </script>

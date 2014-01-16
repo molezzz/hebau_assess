@@ -10,6 +10,7 @@ var user = require('./routes/user');
 var admin = require('./routes/admin');
 var adminUser = require('./routes/admin/user');
 var adminDepartment = require('./routes/admin/department');
+var adminProject = require('./routes/admin/project');
 
 var http = require('http');
 var path = require('path');
@@ -79,6 +80,7 @@ app.get('/admin/login', admin.login);
 app.get('/admin/dashboard', admin.index);
 app.resource('admin/users', adminUser);
 app.resource('admin/departments', adminDepartment);
+app.resource('admin/projects', adminProject);
 app.post('/admin/user/reset/password', adminUser.resetPassword);
 app.get('/users', user.list);
 app.get('/', routes.index);
