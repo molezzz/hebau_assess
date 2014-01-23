@@ -11,6 +11,7 @@ var admin = require('./routes/admin');
 var adminUser = require('./routes/admin/user');
 var adminDepartment = require('./routes/admin/department');
 var adminProject = require('./routes/admin/project');
+var adminRule = require('./routes/admin/rule');
 
 var http = require('http');
 var path = require('path');
@@ -80,7 +81,9 @@ app.get('/admin/login', admin.login);
 app.get('/admin/dashboard', admin.index);
 app.resource('admin/users', adminUser);
 app.resource('admin/departments', adminDepartment);
-app.resource('admin/projects', adminProject);
+var projects = app.resource('admin/projects', adminProject);
+var rules = app.resource('rules', adminRule);
+projects.add(rules);
 app.post('/admin/user/reset/password', adminUser.resetPassword);
 app.get('/users', user.list);
 app.get('/', routes.index);

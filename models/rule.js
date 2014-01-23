@@ -1,6 +1,8 @@
 var orm = require('../lib/seq-models');
 var Seq = orm.Seq();
 var ex = require('lodash');
+var moment = require('moment');
+var crypto = require('crypto');
 
 module.exports = {
   model: {
@@ -18,6 +20,18 @@ module.exports = {
   },
   options: {
     timestamps: true,
+    hooks: {
+      beforeCreate: function(rule, next){
+        var now = moment();
+        var key = 'P' + rule.project_id + '-' + now.format('MMDD');
+        if(rule.parent_id){
+          key += '-R' + rule.parent_id;
+        };
+        rule.key = key + '-' + crypto.randomBytes(3).toString('hex');
+        console.log(rule.key);
+        return next(null, rule);
+      }
+    },
     classMethods: {
 
     },

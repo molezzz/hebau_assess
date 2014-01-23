@@ -1,0 +1,161 @@
+<% layout('../layout') -%>
+<% script('/javascripts/angular/ui-bootstrap.js') -%>
+
+<div class="row" ng-controller="RulesCtrl" style="height:100%;">
+  <div class="col-md-12 loading-wrap">
+    <div class="loading-box" ng-show="loading">
+      <div class="progress progress-striped active">
+        <div class="progress-bar progress-bar-warning"  role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 80%">
+          <span class="sr-only">80% Complete</span>
+        </div>
+      </div>
+      <div class="mask"></div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-3">
+        <div class="panel panel-default panel-primary">
+          <div class="panel-heading"><h4>项目[<%- project.id %>]： <%- project.name %></h4></div>
+          <div class="panel-body">
+            <div class="btn-toolbar" role="toolbar" style="margin-bottom: 1em;">
+              <div class="btn-group pull-left">
+                <a href="#" class="btn btn-primary"><i class="glyphicon glyphicon-chevron-left"></i> 返回列表</a>
+              </div>
+              <div class="btn-group pull-right">
+                <button type="button" class="btn btn-primary" title="添加条目" ng-click="addRule(rules)"><i class="glyphicon glyphicon-plus-sign"></i> 添加条目</button>
+              </div>
+            </div>
+
+            <table class="table table-striped">
+              <tr>
+                <td style="width:6em;"><strong>考评类别</strong></td>
+                <td><%- project.getCateName()%></td>
+              </tr>
+              <tr>
+                <td><strong>考评类型</strong></td>
+                <td><%- project.getTypeName()%></td>
+              </tr>
+              <tr>
+                <td><strong>高分裁剪</strong></td>
+                <td><%- project.high_cut %>%</td>
+              </tr>
+              <tr>
+                <td><strong>低分裁剪</strong></td>
+                <td><%- project.low_cut %>%</td>
+              </tr>
+              <tr>
+                <td><strong>开始时间</strong></td>
+                <td><%- project.beginAt.format('YYYY-MM-DD HH:mm:ss') %></td>
+              </tr>
+              <tr>
+                <td><strong>结束时间</strong></td>
+                <td><%- project.endAt.format('YYYY-MM-DD HH:mm:ss') %></td>
+              </tr>
+              <tr>
+                <td><strong>项目描述</strong></td>
+                <td><%- project.description %></td>
+              </tr>
+            </table>
+          </div><!-- panel-body -->
+        </div>
+      </div><!-- col-sm-3 -->
+
+      <div class="col-sm-9">
+
+        <div class="panel panel-info" ng-repeat="rule in rules">
+          <div class="panel-heading clearfix">
+            <h3 class="panel-title pull-left">
+              <form class="form-inline" role="form">
+                名称：
+                <span ng-hide="rule.edit">{{rule.name}}</span>
+                <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.edit.name" placeholder="规则名称"/></div>
+                [ KEY:
+                <span ng-hide="rule.edit">{{rule.key}}</span>
+                <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.edit.key" placeholder="只能是英文字母 + 数字"/></div>
+                ]&nbsp;
+                分值占比：
+                <span ng-hide="rule.edit">{{rule.scale}}</span>
+                <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.edit.scale" placeholder="只能是数字"/></div>
+                %
+              </form>
+            </h3>
+            <div class="btn-toolbar pull-right" role="toolbar">
+              <div class="btn-group" ng-show="rule.edit">
+                <a href="#" class="btn btn-primary btn-sm" title="删除"><i class="glyphicon glyphicon-remove"></i> 删除</a>
+                <a href="#" class="btn btn-primary btn-sm" title="添加子项"><i class="glyphicon glyphicon-plus"></i> 添项</a>
+              </div>
+              <div class="btn-group" ng-hide="rule.edit">
+                <a href="#" class="btn btn-primary btn-sm" title="编辑" ng-click="setEdit(rule)"><i class="glyphicon glyphicon-edit"></i> 编辑</a>
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h3 class="panel-title">
+                  <form class="form-inline" role="form">
+                    名称：
+                    <span ng-hide="rule.edit">{{rule.name}}</span>
+                    <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.name" placeholder="规则名称"/></div>
+                    [ KEY:
+                    <span ng-hide="rule.edit">{{rule.key}}</span>
+                    <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.key" placeholder="只能是英文字母 + 数字"/></div>
+                    ]
+                  </form>
+                </h3>
+              </div>
+              <div class="panel-body"></div>
+              <div class="panel-footer" ng-show="rule.edit">
+
+              </div>
+            </div>
+
+          </div>
+          <div class="panel-footer" ng-show="rule.edit">
+            <button type="button" class="btn btn-primary" ng-click="saveRule(rule)"><i class="glyphicon glyphicon-floppy-save"></i> 保存</button>
+            <button type="button" class="btn btn-default" ng-click="cancelEdit(rule)"><i class="glyphicon glyphicon-refresh"></i> 取消</button>
+          </div>
+        </div>
+      </div><!-- col-sm-9 -->
+
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+(function($){
+var rules = <%- JSON.stringify(rules) %>;
+var project = <%- JSON.stringify(project) %>;
+var app = angular.module('heba.admin.rules', ['ui.bootstrap'], angular.noop);
+app.controller('RulesCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
+  $scope.rules = rules;
+  $scope.addRule = function(target){
+    target.unshift({edit: {}, _isNew: true});
+  };
+  $scope.saveRule = function(rule){
+    var _rule = rule.edit;
+    var opts = rule._isNew ? { method: 'POST', url: '/admin/projects/' + project.id +'/rules'} : { method: 'PUT', url: '/admin/projects/' + project.id +'/rules/' + rule.id};
+    opts.data = { rule: rule.edit };
+    $http(opts).success(function(json, status, headers, config){
+      if(json && json.success){
+        angular.extend(rule, _rule);
+        rule.edit = false;
+        rule._isNew = false;
+      }else{
+        alert(json.errors);
+      }
+    }).error(function(data, status, headers, config){
+      alert(data);
+    });
+  };
+  $scope.setEdit = function(rule){
+    rule.edit = angular.copy(rule);
+  };
+  $scope.cancelEdit = function(rule){
+    rule.edit = false;
+  };
+}]);
+angular.bootstrap(document.documentElement, ['heba.admin.rules']);
+})(jQuery);
+</script>

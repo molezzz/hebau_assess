@@ -1,5 +1,5 @@
 /*
- * 用于管理project
+ * 用于管理rule
  */
 var ex = require('lodash');
 var moment = require('moment');
@@ -10,24 +10,39 @@ var shared = {
 };
 
 exports.index = function(req, res){
+  var Rule = orm.model('rule');
   var Project = orm.model('project');
-  switch (req.format) {
-      case 'json':
-        var opts = Project.pages(req.query.page, req.query.prepage);
-        opts.order = 'id DESC';
-        Project.search(req.query.q || {}, opts).success(function(projects){
-          res.json({ total: projects.count, projects: projects.rows });
-        });
-        break;
-      default:
-        res.render('admin/project/index',
-          ex.extend({
-            title: '考评管理',
-            cates: Project.cates(),
-            types: Project.types()
-          }, shared)
-        );
-  }
+  var pid = req.params.project;
+  Project.find(pid).success(function(project){
+    if(!project){
+      res.status(404).send('Project with ID:' + pid + ' not found');
+      return;
+    };
+    project.getRules({
+      include: [{ model:Rule, as: 'children'}],
+      order: 'id DESC'
+    }).success(function(rules){
+      switch (req.format) {
+        case 'json':
+          res.json({ total: 0, rules: [] });
+          break;
+        default:
+          res.render('admin/rule/index',
+            ex.extend({
+              title: '考评管理',
+              project: project,
+              rules: rules
+            }, shared)
+          );
+      };
+    }).error(function(errors){
+      console.log(errors);
+      res.status(500).send('System Error<br/>' + errors);
+    });
+  }).error(function(errors){
+    console.log(errors);
+    res.status(500).send('System Error<br/>' + errors);
+  });
 };
 
 exports.new = function(req, res){
@@ -35,19 +50,21 @@ exports.new = function(req, res){
 };
 
 exports.create = function(req, res){
-  var Project = orm.model('project');
-  var project = req.body['project'];
+  var Rule = orm.model('rule');
+  var rule = req.body['rule'];
+  var pid = req.params.project;
   var result = {
     success: false,
     msg: ''
   };
-  console.log(project);
+  rule.project_id = pid;
+  console.log(rule);
   //新版Sequelize将会实现hooks。之前临时采用手动的办法
-  project = Project.build(project);
+  rule = Rule.build(rule);
 
-  project.save().success(function(project){
+  rule.save().success(function(rule){
     result.success = true;
-    result.msg = '新部门添加成功！';
+    result.msg = '新规则添加成功！';
     res.json(result);
   }).error(function(errors){
     result.msg = '添加失败';
@@ -67,12 +84,12 @@ exports.edit = function(req, res){
 };
 
 exports.update = function(req, res){
-  var projectId = req.params.project;
-  var Project = orm.model('project');
+  var ruleId = req.params.rule;
+  var Rule = orm.model('rule');
   var result = {success: false, msg: ''};
 
-  Project.find(projectId).success(function(project){
-    project.updateAttributes(req.body.project, ['type','category','name', 'description', 'high_cut', 'low_cut', 'begin_at', 'end_at'])
+  Rule.find(ruleId).success(function(rule){
+    rule.updateAttributes(req.body.rule, ['type','category','name', 'description', 'high_cut', 'low_cut', 'begin_at', 'end_at'])
         .success(function(){
           result.msg = '更新成功';
           result.success = true;
@@ -93,10 +110,10 @@ exports.update = function(req, res){
 };
 
 exports.destroy = function(req, res){
-  var projects = req.params.project.split('-');
-  var Project = orm.model('project');
+  var rules = req.params.rule.split('-');
+  var Rule = orm.model('rule');
   var result = {success: false, msg: ''};
-  Project.destroy({id: projects})
+  Rule.destroy({id: rules})
       .success(function(){
         result.msg = '考评已删除！';
         result.success = true;
