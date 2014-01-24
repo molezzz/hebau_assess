@@ -69,9 +69,7 @@
                 名称：
                 <span ng-hide="rule.edit">{{rule.name}}</span>
                 <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.edit.name" placeholder="规则名称"/></div>
-                [ KEY:
-                <span>{{rule.key}}</span>
-                ]&nbsp;
+                <small>[ KEY:{{rule.key}}]</small>&nbsp;
                 分值占比：
                 <span ng-hide="rule.edit">{{rule.scale}}</span>
                 <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.edit.scale" placeholder="只能是数字"/></div>
@@ -97,9 +95,7 @@
                     名称：
                     <span ng-hide="cRule.edit">{{cRule.name}}</span>
                     <div ng-show="cRule.edit" class="form-group"><input type="text" class="form-control" ng-model="cRule.edit.name" placeholder="规则名称"/></div>
-                    [ KEY:
-                    <span ng-hide="cRule.edit">{{cRule.key}}</span>
-                    ]
+                    <small>[ KEY:{{cRule.key}}]</small>
                   </form>
                 </h3>
                 <div class="btn-toolbar pull-right" role="toolbar">
@@ -128,16 +124,16 @@
                     <button class="btn btn-info" title="取消" ng-click="addItem(cRule, true)"><i class="glyphicon glyphicon-remove"></i></button>
                   </form>
                 </li>
-                <li class="list-group-item clearfix" ng-repeat="(key, value) in cRule.edit.itemsObj" >
+                <li class="list-group-item clearfix" ng-repeat="(key, value) in cRule.edit.items" >
                   <div class="pull-left">
                     <span class="label label-default">{{key}}</span> 分值：{{value}}
                   </div>
                   <div class="pull-right" ng-show="cRule.edit">
                     <button type="button" class="btn btn-default" ng-click="editItem(cRule, key)"><i class="glyphicon glyphicon-edit"></i></button>
-                    <button type="button" class="btn btn-default" ng-click="delItem(cRule.edit.itemsObj,key)"><i class="glyphicon glyphicon-trash"></i></button>
+                    <button type="button" class="btn btn-default" ng-click="delItem(cRule.edit.items,key)"><i class="glyphicon glyphicon-trash"></i></button>
                   </div>
                 </li>
-                <li ng-hide="cRule.edit" class="list-group-item" ng-repeat="(key, value) in cRule.itemsObj" >
+                <li ng-hide="cRule.edit" class="list-group-item" ng-repeat="(key, value) in cRule.items" >
                   <span class="label label-default">{{key}}</span> 分值：{{value}}
                 </li>
               </ul>
@@ -174,7 +170,7 @@ app.controller('RulesCtrl', ['$scope', '$modal', '$http', function($scope, $moda
     }
   };
   $scope.addRule = function(target, parent){
-    var rule = {edit: {itemsObj:{}}, _isNew: true};
+    var rule = {edit: {project_id: project.id, items:{}}, _isNew: true};
     if(parent){
       rule.edit.parent_id = parent.id;
     };
@@ -205,14 +201,12 @@ app.controller('RulesCtrl', ['$scope', '$modal', '$http', function($scope, $moda
     }
   };
   $scope.editItem = function(rule, key){
-    rule.edit._newItem = { key: key, point: rule.edit.itemsObj[key]};
-    console.log(rule.edit._newItem);
+    rule.edit._newItem = { key: key, point: rule.edit.items[key]};
   };
   $scope.saveRule = function(rule){
-    var _rule = rule.edit;
+    var _rule = angular.copy(rule.edit);
     var opts = rule._isNew ? { method: 'POST', url: '/admin/projects/' + project.id +'/rules'} : { method: 'PUT', url: '/admin/projects/' + project.id +'/rules/' + rule.id};
-    opts.data = { rule: rule.edit };
-    delete opts.data.rule['items'];
+    opts.data = { rule: _rule };
     $http(opts).success(function(json, status, headers, config){
       if(json && json.success){
         angular.extend(rule, json.rule);
@@ -231,7 +225,7 @@ app.controller('RulesCtrl', ['$scope', '$modal', '$http', function($scope, $moda
   $scope.submitItem = function(rule){
     var item = rule.edit._newItem;
     if(rule.edit._newItem){
-      rule.edit.itemsObj[item.key] = item.point;
+      rule.edit.items[item.key] = item.point;
       rule.edit._newItem = false;
     };
   };

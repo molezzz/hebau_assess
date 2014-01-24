@@ -8,6 +8,10 @@ var orm = require('../../lib/seq-models');
 var shared = {
   projectMenuActive: 'active'
 };
+var attrs = [
+  'name', 'items', 'project_id',
+  'parent_id','scale', 'key'
+];
 
 exports.index = function(req, res){
   var Rule = orm.model('rule');
@@ -54,17 +58,11 @@ exports.create = function(req, res){
   var Rule = orm.model('rule');
   var rule = req.body['rule'];
   var pid = req.params.project;
-  var attrs = [
-    'type','items','itemsObj','category',
-    'name', 'description', 'high_cut',
-    'low_cut', 'begin_at', 'end_at'
-  ];
   var result = {
     success: false,
     msg: ''
   };
   rule.project_id = pid;
-  console.log(rule);
 
   Rule.create(rule, attrs).success(function(rule){
     result.success = true;

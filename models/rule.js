@@ -33,22 +33,13 @@ module.exports = {
       }
     },
     getterMethods: {
-      itemsObj: function(){
-        return JSON.parse(this.items);
-      },
       items: function(){
-        console.log(['From items', this.getDataValue('items')]);
-        return this.getDataValue('items');
+        return JSON.parse(this.getDataValue('items'));
       }
     },
     setterMethods: {
-      itemsObj: function(items){
-        this.items = JSON.stringify(items);
-        console.log(this.items);
-        return ;
-      },
       items: function(items){
-        this.setDataValue(JSON.stringify(items));
+        this.setDataValue('items', JSON.stringify(items));
         return;
       }
     },
