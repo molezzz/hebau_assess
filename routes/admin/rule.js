@@ -18,8 +18,9 @@ exports.index = function(req, res){
       res.status(404).send('Project with ID:' + pid + ' not found');
       return;
     };
-    project.getRules({
+    Rule.findAll({
       include: [{ model:Rule, as: 'children'}],
+      where: { 'rules.parent_id': {lt: 1}, 'rules.project_id': project.id },
       order: 'id DESC'
     }).success(function(rules){
       switch (req.format) {
@@ -53,18 +54,22 @@ exports.create = function(req, res){
   var Rule = orm.model('rule');
   var rule = req.body['rule'];
   var pid = req.params.project;
+  var attrs = [
+    'type','items','itemsObj','category',
+    'name', 'description', 'high_cut',
+    'low_cut', 'begin_at', 'end_at'
+  ];
   var result = {
     success: false,
     msg: ''
   };
   rule.project_id = pid;
   console.log(rule);
-  //新版Sequelize将会实现hooks。之前临时采用手动的办法
-  rule = Rule.build(rule);
 
-  rule.save().success(function(rule){
+  Rule.create(rule, attrs).success(function(rule){
     result.success = true;
     result.msg = '新规则添加成功！';
+    result.rule = rule;
     res.json(result);
   }).error(function(errors){
     result.msg = '添加失败';
@@ -89,10 +94,11 @@ exports.update = function(req, res){
   var result = {success: false, msg: ''};
 
   Rule.find(ruleId).success(function(rule){
-    rule.updateAttributes(req.body.rule, ['type','category','name', 'description', 'high_cut', 'low_cut', 'begin_at', 'end_at'])
+    rule.updateAttributes(req.body.rule, attrs)
         .success(function(){
           result.msg = '更新成功';
           result.success = true;
+          result.rule = rule;
           res.json(result);
         })
         .error(function(errors){
@@ -115,7 +121,7 @@ exports.destroy = function(req, res){
   var result = {success: false, msg: ''};
   Rule.destroy({id: rules})
       .success(function(){
-        result.msg = '考评已删除！';
+        result.msg = '考评条目已删除！';
         result.success = true;
         res.json(result);
       })

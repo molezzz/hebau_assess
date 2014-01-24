@@ -48,7 +48,7 @@ var dbConfig = {
   production: 'mysql://hebau:hebau@localhost/assess',
   test: 'mysql://bdall:bdall@192.168.3.2/assess'
 };
-orm.setup(__dirname + '/models', dbConfig[app.get('env')]);
+orm.setup(__dirname + '/models', dbConfig[app.get('env')],{ logging: console.log });
 // all environments
 app.engine('ejs', engine);
 app.set('port', process.env.PORT || 3000);

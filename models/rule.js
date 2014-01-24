@@ -23,13 +23,33 @@ module.exports = {
     hooks: {
       beforeCreate: function(rule, next){
         var now = moment();
-        var key = 'P' + rule.project_id + '-' + now.format('MMDD');
+        var key = 'P' + rule.project_id;
         if(rule.parent_id){
-          key += '-R' + rule.parent_id;
+          key += 'R' + rule.parent_id;
         };
-        rule.key = key + '-' + crypto.randomBytes(3).toString('hex');
-        console.log(rule.key);
+        key += '-' + now.format('DDHHmm');
+        rule.key = key + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
         return next(null, rule);
+      }
+    },
+    getterMethods: {
+      itemsObj: function(){
+        return JSON.parse(this.items);
+      },
+      items: function(){
+        console.log(['From items', this.getDataValue('items')]);
+        return this.getDataValue('items');
+      }
+    },
+    setterMethods: {
+      itemsObj: function(items){
+        this.items = JSON.stringify(items);
+        console.log(this.items);
+        return ;
+      },
+      items: function(items){
+        this.setDataValue(JSON.stringify(items));
+        return;
       }
     },
     classMethods: {
