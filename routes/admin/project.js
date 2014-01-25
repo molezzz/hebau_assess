@@ -41,7 +41,7 @@ exports.create = function(req, res){
     success: false,
     msg: ''
   };
-  console.log(project);
+  //console.log(project);
   //新版Sequelize将会实现hooks。之前临时采用手动的办法
   project = Project.build(project);
 

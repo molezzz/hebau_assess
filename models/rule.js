@@ -8,9 +8,22 @@ module.exports = {
   model: {
     id: { type: Seq.INTEGER, autoIncrement: true, primaryKey: true },
     parent_id: { type: Seq.INTEGER, allowNull: false, defaultValue: 0 },
-    name: { type: Seq.STRING, allowNull: false, comment: '规则名称'},
+    name: {
+      type: Seq.STRING, allowNull: false,
+      comment: '规则名称',
+      validate: {
+        notEmpty: { msg: '名称不能为空'}
+      }
+    },
     key: { type: Seq.STRING, allowNull: false, comment: '英文键值'},
-    scale: { type: Seq.INTEGER.UNSIGNED, allowNull: false, defaultValue: 100, comment: '分值占比 0-100'},
+    scale: {
+      type: Seq.INTEGER.UNSIGNED, allowNull: false, defaultValue: 100,
+      comment: '分值占比 0-100',
+      validate: {
+        max: { args: 100, msg: '分值占比不能高于 100'},
+        min: { args: 0, msg: '分值占比不能低于 0'}
+      }
+    },
     items: { type: Seq.TEXT, allowNull: false, defaultValue: '{}', comment: '选项 {key: point}'}
   },
   relations: {

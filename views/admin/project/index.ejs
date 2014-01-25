@@ -85,14 +85,18 @@
               <td>
                 <div class="pull-right">
                   <div class="btn-group">
-                    <a href="/admin/projects/{{prj.id}}/rules" class="btn btn-default btn-sm glyphicon glyphicon-list-alt" title="添加或修改规则"></a>
-                  </div>
-                  <div class="btn-group">
-                    <a href="#edit" class="btn btn-default btn-sm glyphicon glyphicon-edit" title="编辑" ng-click="editPrj(prj)"></a>
+                    <a href="/admin/projects/{{prj.id}}/rules" class="btn btn-default btn-sm" title="添加或修改规则">
+                      <i class="glyphicon glyphicon-list-alt"></i>
+                    </a>
+                    <a href="#edit" class="btn btn-default btn-sm" title="编辑" ng-click="editPrj(prj)">
+                      <i class="glyphicon glyphicon-edit"></i>
+                    </a>
                   </div>
 
                   <div class="btn-group">
-                    <a href="#delete" class="btn btn-danger btn-sm glyphicon glyphicon-trash" title="删除员工" ng-click="delPrj(prj)"></a>
+                    <a href="#delete" class="btn btn-danger btn-sm" title="删除员工" ng-click="delPrj(prj)">
+                      <i class="glyphicon glyphicon-trash"></i>
+                    </a>
                   </div>
                 </div>
               </td>

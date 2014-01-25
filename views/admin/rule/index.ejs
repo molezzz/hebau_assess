@@ -19,7 +19,7 @@
           <div class="panel-body">
             <div class="btn-toolbar" role="toolbar" style="margin-bottom: 1em;">
               <div class="btn-group pull-left">
-                <a href="#" class="btn btn-primary"><i class="glyphicon glyphicon-chevron-left"></i> 返回列表</a>
+                <a href="/admin/projects" class="btn btn-primary"><i class="glyphicon glyphicon-chevron-left"></i> 返回列表</a>
               </div>
               <div class="btn-group pull-right">
                 <button type="button" class="btn btn-primary" title="添加条目" ng-click="addRule(rules)"><i class="glyphicon glyphicon-plus-sign"></i> 添加条目</button>
@@ -68,18 +68,18 @@
               <form class="form-inline" role="form">
                 名称：
                 <span ng-hide="rule.edit">{{rule.name}}</span>
-                <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.edit.name" placeholder="规则名称"/></div>
-                <small>[ KEY:{{rule.key}}]</small>&nbsp;
+                <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.name" placeholder="规则名称"/></div>
+                <small>[ {{rule.key}} ]</small>&nbsp;
                 分值占比：
                 <span ng-hide="rule.edit">{{rule.scale}}</span>
-                <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.edit.scale" placeholder="只能是数字"/></div>
+                <div ng-show="rule.edit" class="form-group"><input type="text" class="form-control" ng-model="rule.scale" placeholder="只能是数字"/></div>
                 %
               </form>
             </h3>
             <div class="btn-toolbar pull-right" role="toolbar">
               <div class="btn-group" ng-show="rule.edit">
                 <a href="#" class="btn btn-primary btn-sm" title="删除" ng-click="delRule(rules, $index)"><i class="glyphicon glyphicon-trash"></i> 删除</a>
-                <a href="#" class="btn btn-primary btn-sm" title="添加子项" ng-click="addRule(rule.children, rule)"><i class="glyphicon glyphicon-plus"></i> 子项</a>
+                <a href="#" class="btn btn-primary btn-sm" ng-hide="rule._isNew" title="添加子项" ng-click="addRule(rule.children, rule)"><i class="glyphicon glyphicon-plus"></i> 子项</a>
               </div>
               <div class="btn-group" ng-hide="rule.edit">
                 <a href="#" class="btn btn-primary btn-sm" title="编辑" ng-click="setEdit(rule)"><i class="glyphicon glyphicon-edit"></i> 编辑</a>
@@ -94,8 +94,8 @@
                   <form class="form-inline" role="form">
                     名称：
                     <span ng-hide="cRule.edit">{{cRule.name}}</span>
-                    <div ng-show="cRule.edit" class="form-group"><input type="text" class="form-control" ng-model="cRule.edit.name" placeholder="规则名称"/></div>
-                    <small>[ KEY:{{cRule.key}}]</small>
+                    <div ng-show="cRule.edit" class="form-group"><input type="text" class="form-control" ng-model="cRule.name" placeholder="规则名称"/></div>
+                    <small>[ {{cRule.key}} ]</small>
                   </form>
                 </h3>
                 <div class="btn-toolbar pull-right" role="toolbar">
@@ -110,43 +110,40 @@
 
               </div>
               <ul class="list-group">
-                <li class="list-group-item" ng-show="cRule.edit._newItem">
+                <li class="list-group-item" ng-show="cRule._newItem">
                   <form class="form-inline" role="form">
                     <div class="form-group">
                       <label class="sr-only">选项</label>
-                      <input type="text" ng-model="cRule.edit._newItem.key" class="form-control" placeholder="输入选项">
+                      <input type="text" ng-model="cRule._newItem.key" class="form-control" placeholder="输入选项">
                     </div>
                     <div class="form-group">
                       <label class="sr-only">分值</label>
-                      <input type="number" ng-model="cRule.edit._newItem.point" class="form-control" placeholder="输入分值">
+                      <input type="number" ng-model="cRule._newItem.point" class="form-control" placeholder="输入分值">
                     </div>
                     <button class="btn btn-info" title="确定" ng-click="submitItem(cRule)"><i class="glyphicon glyphicon-ok"></i></button>
                     <button class="btn btn-info" title="取消" ng-click="addItem(cRule, true)"><i class="glyphicon glyphicon-remove"></i></button>
                   </form>
                 </li>
-                <li class="list-group-item clearfix" ng-repeat="(key, value) in cRule.edit.items" >
+                <li class="list-group-item clearfix" ng-repeat="(key, value) in cRule.items" >
                   <div class="pull-left">
                     <span class="label label-default">{{key}}</span> 分值：{{value}}
                   </div>
                   <div class="pull-right" ng-show="cRule.edit">
                     <button type="button" class="btn btn-default" ng-click="editItem(cRule, key)"><i class="glyphicon glyphicon-edit"></i></button>
-                    <button type="button" class="btn btn-default" ng-click="delItem(cRule.edit.items,key)"><i class="glyphicon glyphicon-trash"></i></button>
+                    <button type="button" class="btn btn-default" ng-click="delItem(cRule.items,key)"><i class="glyphicon glyphicon-trash"></i></button>
                   </div>
-                </li>
-                <li ng-hide="cRule.edit" class="list-group-item" ng-repeat="(key, value) in cRule.items" >
-                  <span class="label label-default">{{key}}</span> 分值：{{value}}
                 </li>
               </ul>
               <div class="panel-footer" ng-show="cRule.edit">
                 <button type="button" class="btn btn-info" ng-click="saveRule(cRule)"><i class="glyphicon glyphicon-floppy-save"></i> 保存</button>
-                <button type="button" class="btn btn-default" ng-click="cancelEdit(cRule)"><i class="glyphicon glyphicon-refresh"></i> 取消</button>
+                <button type="button" class="btn btn-default" ng-click="cancelEdit(rule.children, $index)"><i class="glyphicon glyphicon-refresh"></i> 取消</button>
               </div>
             </div>
 
           </div>
           <div class="panel-footer" ng-show="rule.edit">
             <button type="button" class="btn btn-primary" ng-click="saveRule(rule)"><i class="glyphicon glyphicon-floppy-save"></i> 保存</button>
-            <button type="button" class="btn btn-default" ng-click="cancelEdit(rule)"><i class="glyphicon glyphicon-refresh"></i> 取消</button>
+            <button type="button" class="btn btn-default" ng-click="cancelEdit(rules, $index)"><i class="glyphicon glyphicon-refresh"></i> 取消</button>
           </div>
         </div>
       </div><!-- col-sm-9 -->
@@ -162,34 +159,45 @@ var project = <%- JSON.stringify(project) %>;
 var app = angular.module('heba.admin.rules', ['ui.bootstrap'], angular.noop);
 app.controller('RulesCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
   $scope.rules = rules;
+
   $scope.addItem = function(rule, cancel){
     if(cancel){
-      rule.edit._newItem = false;
+      rule._newItem = false;
     }else{
-      rule.edit._newItem = {};
+      rule._newItem = {};
     }
   };
   $scope.addRule = function(target, parent){
-    var rule = {edit: {project_id: project.id, items:{}}, _isNew: true};
+    var rule = {project_id: project.id, items:{}, edit: true, _isNew: true};
     if(parent){
-      rule.edit.parent_id = parent.id;
+      rule.parent_id = parent.id;
     };
     target.unshift(rule);
   };
-  $scope.cancelEdit = function(rule){
+  $scope.cancelEdit = function(rules, idx){
+    var rule = rules[idx];
+    if(rule._isNew){
+      return $scope.delRule(rules, idx);
+    };
+    angular.extend(rule, rule._orig);
     rule.edit = false;
+    delete rule['_orig'];
   };
   $scope.delItem = function(items,key){
     delete items[key];
   };
   $scope.delRule = function(rules, idx){
     var rule = rules[idx];
+    if(rule._isNew){
+      rules.splice(idx, 1);
+      return ;
+    };
     if(confirm('确实要删除“'+ rule.name +'" 条目吗？')){
       $http.delete('/admin/projects/'+ project.id +'/rules/' + rule.id)
             .success(function(json, status, headers, config) {
                 if(json && json.success){
                   alert(json.msg);
-                  rules.splice (idx, 1);
+                  rules.splice(idx, 1);
                 }else{
                   alert(json.msg);
                 }
@@ -201,11 +209,23 @@ app.controller('RulesCtrl', ['$scope', '$modal', '$http', function($scope, $moda
     }
   };
   $scope.editItem = function(rule, key){
-    rule.edit._newItem = { key: key, point: rule.edit.items[key]};
+    rule._newItem = { key: key, point: rule.items[key]};
   };
   $scope.saveRule = function(rule){
-    var _rule = angular.copy(rule.edit);
+    var _rule = angular.copy(rule);
+    if(rule.children){
+      for (var i = 0; i < rule.children.length; i++) {
+        var cr = rule.children[i];
+        if(cr.edit){
+          alert('还有没保存的子项目，请先保存子项目！');
+          return;
+        };
+      };
+    };
     var opts = rule._isNew ? { method: 'POST', url: '/admin/projects/' + project.id +'/rules'} : { method: 'PUT', url: '/admin/projects/' + project.id +'/rules/' + rule.id};
+    angular.forEach(['_orig','_isNew','_newItem','updateAt','createdAt'], function(v, k){
+      delete _rule[v];
+    });
     opts.data = { rule: _rule };
     $http(opts).success(function(json, status, headers, config){
       if(json && json.success){
@@ -213,20 +233,21 @@ app.controller('RulesCtrl', ['$scope', '$modal', '$http', function($scope, $moda
         rule.edit = false;
         rule._isNew = false;
       }else{
-        alert(json.errors);
+        hbex.showErr(json.errors, json.msg);
       }
     }).error(function(data, status, headers, config){
       alert(data);
     });
   };
   $scope.setEdit = function(rule){
-    rule.edit = angular.copy(rule);
+    rule.edit = true;
+    rule._orig = angular.copy(rule);
   };
   $scope.submitItem = function(rule){
-    var item = rule.edit._newItem;
-    if(rule.edit._newItem){
-      rule.edit.items[item.key] = item.point;
-      rule.edit._newItem = false;
+    var item = rule._newItem;
+    if(rule._newItem){
+      rule.items[item.key] = item.point;
+      rule._newItem = false;
     };
   };
 

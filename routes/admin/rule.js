@@ -4,6 +4,7 @@
 var ex = require('lodash');
 var moment = require('moment');
 var orm = require('../../lib/seq-models');
+var Seq = orm.Seq();
 
 var shared = {
   projectMenuActive: 'active'
@@ -64,7 +65,7 @@ exports.create = function(req, res){
   };
   rule.project_id = pid;
 
-  Rule.create(rule, attrs).success(function(rule){
+  Rule.create(rule, { fields: attrs }).success(function(rule){
     result.success = true;
     result.msg = '新规则添加成功！';
     result.rule = rule;
@@ -117,16 +118,24 @@ exports.destroy = function(req, res){
   var rules = req.params.rule.split('-');
   var Rule = orm.model('rule');
   var result = {success: false, msg: ''};
-  Rule.destroy({id: rules})
-      .success(function(){
-        result.msg = '考评条目已删除！';
-        result.success = true;
-        res.json(result);
-      })
-      .error(function(errors){
-        result.msg = '删除失败! 写入数据库出错！';
-        console.log(errors);
-        res.json(result);
-      });
-
+  orm.seq().transaction(function(t) {
+    //先删除子类
+    Rule.destroy({parent_id: rules}).success(function(){
+      Rule.destroy({id: rules})
+          .success(function(){
+            t.commit();
+            result.msg = '考评条目已删除！';
+            result.success = true;
+            res.json(result);
+          })
+          .error(function(errors){
+            t.rollback();
+            result.msg = '删除失败! 写入数据库出错！';
+            console.log(errors);
+            res.json(result);
+          });
+    }).error(function(errors){
+      t.rollback();
+    });
+  });
 };
