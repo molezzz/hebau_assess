@@ -46,18 +46,18 @@ module.exports = {
       type: Seq.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0,
       comment: '高分裁剪百分比 0-100',
       validate: {
-        isNumeric: true,
-        min: 0,
-        max: 50
+        //isInt: true,
+        min: { args: 0, msg: '高分剪裁不能小于0'},
+        max: { args: 50, msg: '高分剪裁不能大于50'}
       }
     },
     low_cut: {
       type: Seq.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0,
       comment: '低分裁剪百分比 0-100',
       validate: {
-        isNumeric: true,
-        min: 0,
-        max: 50
+        //isInt: true,
+        min: { args: 0, msg: '低分剪裁不能小于0'},
+        max: { args: 50, msg: '低分剪裁不能大于50'}
       }
     },
     begin_at: {

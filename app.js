@@ -4,6 +4,7 @@
  */
 
 var express = require('express');
+var socketIo = require('socket.io');
 var engine = require('ejs-locals')
 var routes = require('./routes');
 var user = require('./routes/user');
@@ -12,6 +13,7 @@ var adminUser = require('./routes/admin/user');
 var adminDepartment = require('./routes/admin/department');
 var adminProject = require('./routes/admin/project');
 var adminRule = require('./routes/admin/rule');
+var adminAccount = require('./routes/admin/account');
 
 var http = require('http');
 var path = require('path');
@@ -27,6 +29,7 @@ var orm = require('./lib/seq-models');
 
 
 var app = express();
+var socketSrv = { io: null, clients: {} };
 
 var dbConfig = {
   development: 'mysql://mole:mole628@221.194.37.108/assess',
@@ -62,6 +65,11 @@ app.use(express.cookieSession({ key:'hebau_assess_sess', secret: '9a63f01779e0f8
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.methodOverride());
+app.use(function (req, res, next) {
+  res.socketSrv = socketSrv;
+  //console.log('Setup socket.io');
+  next();
+});
 app.use(app.router);
 app.use(require('less-middleware')({ src: __dirname + '/public' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -81,6 +89,9 @@ app.get('/admin/login', admin.login);
 app.get('/admin/dashboard', admin.index);
 app.resource('admin/users', adminUser);
 app.resource('admin/departments', adminDepartment);
+app.resource('admin/accounts', adminAccount);
+app.get('/admin/accounts/wizard/deps', adminAccount.wizardDeps);
+app.post('/admin/accounts/wizard/run', adminAccount.wizardRun);
 var projects = app.resource('admin/projects', adminProject);
 var rules = app.resource('rules', adminRule);
 projects.add(rules);
@@ -88,6 +99,18 @@ app.post('/admin/user/reset/password', adminUser.resetPassword);
 app.get('/users', user.list);
 app.get('/', routes.index);
 
-http.createServer(app).listen(app.get('port'), function(){
+var server = http.createServer(app);
+socketSrv.io = socketIo.listen(server);
+socketSrv.io.sockets.on('connection', function (socket) {
+  socketSrv.clients[socket.id] = socket;
+  socket.emit('account_server_ok', { status: 'OK', msg: '服务器准备就绪... OK', cid: socket.id});
+  socket.on('account_ready', function(data){
+    console.log(data);
+  });
+});
+socketSrv.io.sockets.on('disconnect', function () {
+   console.log('disconnect client event....');
+});
+server.listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });

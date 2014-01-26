@@ -19,6 +19,7 @@
     "express-resource": "*",
     "moment": "*",
     "moment-timezone": "*",
-    "sequelize": "2.x"
+    "sequelize": "2.x",
+    "socket.io": "latest"
   }
 }

@@ -1,0 +1,382 @@
+<% layout('../layout') -%>
+<% script('/javascripts/angular/ui-bootstrap.js') -%>
+<% script('/javascripts/socket.io.min.js') -%>
+<% stylesheet('/stylesheets/font-awesome.min.css') -%>
+
+<div class="row" ng-controller="AccsCtrl" style="height:100%;">
+  <div class="col-md-12 loading-wrap">
+
+    <div class="row" style="padding:0 10px;">
+      <ul class="nav nav-tabs">
+        <li class="active"><a href="#"><%=title%></a></li>
+      </ul>
+      <div class="navbar navbar-default" role="navigation" style="margin-top:3px;">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse">
+          <div class="btn-group navbar-left" >
+            <button type="button" class="btn btn-default navbar-btn btn-sm" ng-click="accWizard()"><span class="fa fa-users"></span> 生成向导</button>
+            <button type="button" class="btn btn-danger navbar-btn btn-sm" ng-click="delAll()"><span class="glyphicon glyphicon-trash"></span> 删除</button>
+          </div>
+
+          <div class="btn-group navbar-right">
+            <button type="button" title="刷新" class="btn btn-default navbar-btn btn-sm" ng-click="loadData()"><span class="glyphicon glyphicon-refresh"></span></button>
+          </div>
+          <div class="btn-group navbar-right">
+
+          </div>
+
+        </div><!-- /.navbar-collapse -->
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-4">
+        <div class="panel panel-warning" ng-show="onWizard">
+          <div class="panel-heading">
+            <div class="panel-title"> 账户生成向导 </div>
+          </div>
+          <div class="panel-body" style="height:36em;overflow:auto;">
+            <div class="alert alert-warning" style="margin-top: 1em;" ng-show="wLoading">
+              <strong><i class="fa fa-spinner fa-spin"></i></strong>
+              数据加载中...
+            </div>
+            <div ng-repeat="(key, deps) in wizardDeps">
+              <div class="page-header" style="margin-top:1em;">
+                <h4>{{cates[key]}}</h2>
+              </div>
+              <ul class="list-group">
+                <li class="list-group-item" ng-repeat="dep in deps">
+                  <div class="input-group">
+                    <span class="input-group-addon">{{dep.name}}</span>
+                    <input type="number" min="0" class="form-control" ng-model="dep.total"/>
+                    <span class="input-group-addon">个</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="panel-footer clearfix">
+            <div class="pull-left">
+              {{wizardStatus}}
+            </div>
+            <div class="pull-right">
+              <button type="button" class="btn btn-primary" ng-click="wizardStart()">开始生成</button>
+              <button type="button" class="btn" ng-click="wizardCancel()">取消</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel panel-primary" ng-hide="onWizard">
+          <div class="panel-heading clearfix">
+            <div class="row" style="padding: 0 0.5em;">
+              <h3 class="panel-title pull-left col-md-4" style="line-height: 2em;">选择部门</h3>
+              <div class="input-group pull-right col-md-6">
+                <input type="text" class="form-control input-sm" placeholder="输入部门名称" ng-model="depsFilter.name"/>
+                <span class="input-group-btn">
+                  <button type="submit" class="btn btn-default btn-sm" ng-click="loadDeps()">搜索</button>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <ul class="nav nav-tabs nav-justified">
+              <li ng-repeat="(key, cate) in cates" ng-class="{active: depsFilter.category == key}">
+               <a href="#" ng-click="changeCate(key)">{{cate}}</a>
+              </li>
+            </ul>
+            <div class="alert alert-warning" style="margin-top: 1em;" ng-show="dpLoading">
+              <strong><i class="fa fa-spinner fa-spin"></i></strong>
+              数据加载中...
+            </div>
+            <div class="list-group" style="margin-top: 1em;">
+              <a href="#{{key}}" class="list-group-item" ng-repeat="(key, dep) in deps" ng-click="showCateAcc(dep)" ng-class="{active: filter.department.id == dep.id}">
+                {{ dep.name }}
+              </a>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <pagination total-items="depsTotal" items-per-page="depPerpage" page="depsFilter.page" max-size="15" class="pagination-sm" boundary-links="true" rotate="false" previous-text="'&laquo;上一页'" next-text="'下一页&raquo;'" last-text="尾页" first-text="首页"></pagination>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-8">
+        <div class="page-header">
+          <h2>账户列表 <small ng-show="filter.department">[ {{filter.department.name}} ]</small></h2>
+        </div>
+        <div class="alert alert-warning" style="margin-top: 1em;" ng-show="loading">
+          <strong><i class="fa fa-spinner fa-spin"></i></strong>
+          数据加载中...
+        </div>
+        <table class="table table-striped table-hover table-condensed">
+          <thead>
+            <tr>
+              <th></th>
+              <th>#</th>
+              <th>帐户名</th>
+              <th>分组</th>
+              <th>有效</th>
+              <th>最后登录时间</th>
+              <th>最后登录IP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="acc in accs">
+              <td><input type="checkbox" ng-model="acc.checked" ng-checked="acc.checked"/></td>
+              <td>{{ acc.id }}</td>
+              <td>{{ acc.name }}</td>
+              <td>{{ acc.group_key }}</td>
+              <td>{{ !acc.invalid }}</td>
+              <td>{{ acc.last_login_at | date:'yyyy-MM-dd' }}</td>
+              <td>{{ acc.last_login_ip }}</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- col-md-12 -->
+  <div class="navbar navbar-default navbar-fixed-bottom">
+    <div class="navbar-header">
+      <span class="navbar-brand">总计: {{ accsTotal }} 条记录 第{{ filter.page }}页/共{{ numPages() }}页</span>
+    </div>
+    <div class="collapse navbar-collapse">
+       <div class="navbar-right">
+        <pagination total-items="accsTotal" items-per-page="perpage" page="filter.page" max-size="15" class="pagination-sm" boundary-links="true" rotate="false" previous-text="'&laquo;上一页'" next-text="'下一页&raquo;'" last-text="尾页" first-text="首页"></pagination>
+       </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+(function($){
+var cates = <%- JSON.stringify(cates) %>;
+var app = angular.module('heba.admin.accs', ['ui.bootstrap'], angular.noop);
+app.filter('cateName', function(){
+  var labels = {
+    '0': 'default',
+    '1': 'primary',
+    '2': 'info',
+    '3': 'success'
+  }
+  return function(val){
+    return '<span class="label label-'+labels[val]+'">'+ cates[val] +'</span>'
+  }
+});
+app.controller('AccsCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
+
+  $scope.deps = [];
+  $scope.depsTotal = 0;
+  $scope.accs = [];
+  $scope.accsTotal = 0;
+  $scope.dpLoading = false;
+  $scope.filter = { name: '', department: null, page: 1 };
+  $scope.cates = cates;
+  $scope.perpage = 20;
+  $scope.depsFilter = { name: '', category: 1, page: 1 };
+  $scope.depPerpage = 10;
+  $scope.onWizard = false;
+  $scope.wizardDeps = {};
+  $scope.wLoading = false;
+  $scope.wizardStatus = '';
+
+  $scope.accWizard = function(){
+    $scope.onWizard = true;
+    $scope.wLoading = true;
+    $http.get('/admin/accounts/wizard/deps')
+    .success(function(json, status, headers, config){
+      angular.extend($scope.wizardDeps, json);
+      $scope.wLoading = false;
+    })
+    .error(function(data, status, headers, config) {
+        alert(data);
+        console.log(data);
+        $scope.wLoading = false;
+     });
+  };
+
+  $scope.changeCate = function(id){
+    $scope.depsFilter.category = id;
+  };
+
+  $scope.showCateAcc = function(dep){
+    $scope.filter.department = dep;
+  };
+
+  $scope.delAll = function(){
+    var deps = [];
+    angular.forEach($scope.deps, function(dep, key){
+      if(dep.checked) {
+        deps.push(dep.id);
+      }
+    });
+    if(deps.length < 1){
+      alert('没有选择任何部门');
+      return;
+    }else{
+      if(confirm('确实要删除选定的'+ deps.length +'个部门吗？')){
+        $http.delete('/admin/departments/'+ deps.join('-'))
+            .success(function(json, status, headers, config) {
+                if(json && json.success){
+                  alert(json.msg);
+                  $scope.loadData();
+                }else{
+                  alert(json.msg);
+                }
+             })
+             .error(function(data, status, headers, config) {
+                alert(data);
+                console.log(data);
+             });
+      }
+    }
+  }
+
+  $scope.delAcc = function(dep){
+    if(confirm('确实要删除“'+ dep.name +'"')){
+      $http.delete('/admin/departments/'+ dep.id)
+            .success(function(json, status, headers, config) {
+                if(json && json.success){
+                  alert(json.msg);
+                  $scope.loadData();
+                }else{
+                  alert(json.msg);
+                }
+             })
+             .error(function(data, status, headers, config) {
+                alert(data);
+                console.log(data);
+             });
+    }
+  }
+
+  $scope.editAcc = function(dep){
+    var data = {
+      title: '重命名',
+      dep: dep,
+      edit: true,
+      callback: function(){
+        $scope.loadData();
+      }
+    }
+    $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
+  };
+
+  $scope.loadData = function(keepPage){
+    var query = {};
+    $scope.loading = true;
+    if($scope.filter.department !== null && $scope.filter.department.id != 0){
+      query['q[department_id_eq]'] = $scope.filter.department.id;
+    };
+    if(!keepPage){
+      $scope.filter.page = 1;
+    }
+    query.page = $scope.filter.page;
+    query.perpage = $scope.perpage;
+    $http.get('/admin/accounts.json?' + $.param(query))
+         .success(function(json, status, headers, config) {
+            $scope.accs = json.accounts;
+            $scope.accsTotal = json.total;
+            $scope.loading = false;
+         })
+         .error(function(data, status, headers, config) {
+            alert(data);
+            console.log(data);
+            $scope.loading = false;
+         });
+  };
+
+  $scope.loadDeps = function(keepPage){
+    var query = {};
+    $scope.dpLoading = true;
+    if($scope.depsFilter.name != ''){
+      query['q[name_like]'] = $scope.depsFilter.name;
+    };
+    if($scope.depsFilter.category !== undefined && $scope.depsFilter.category != 'ALL'){
+      query['q[category_id_eq]'] = $scope.depsFilter.category;
+    };
+    if(!keepPage){
+      $scope.depsFilter.page = 1;
+    }
+    query.page = $scope.depsFilter.page;
+    query.perpage = $scope.depPerpage;
+    $http.get('/admin/departments.json?' + $.param(query))
+         .success(function(json, status, headers, config) {
+            $scope.deps = json.departments;
+            $scope.depsTotal = json.total;
+            $scope.dpLoading = false;
+         })
+         .error(function(data, status, headers, config) {
+            alert(data);
+            console.log(data);
+            $scope.loading = false;
+         });
+  };
+
+  $scope.newAcc = function(){
+    var data = {
+      title: '添加部门',
+      callback: function(){
+        $scope.loadData();
+      }
+    }
+    $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
+  };
+
+  $scope.numPages = function(){
+    return Math.max(Math.ceil($scope.accsTotal / $scope.perpage), 1);
+  };
+
+  $scope.wizardStart = function(){
+    var parser = document.createElement('a');
+    parser.href = window.location;
+    var socket = io.connect(parser.protocol + '//' + parser.host);
+    socket.on('account_server_ok', function (data) {
+      console.log(data);
+      $scope.wizardStatus = data.msg;
+      $scope.$digest();
+      $http.post('/admin/accounts/wizard/run',{ deps: [], cid: data.cid})
+      .success(function(json, status, headers, config){
+        socket.disconnect();
+      }).error(function(data){
+        console.log(data);
+        alert(data);
+        socket.disconnect();
+      });
+    });
+    socket.on('account_status', function(data){
+      $scope.wizardStatus = data.msg;
+      $scope.$digest();
+    });
+  };
+
+  $scope.wizardCancel = function(){
+    $scope.onWizard = false;
+  };
+
+  $scope.$watch('filter.department', function(to, from){
+    $scope.loadData();
+  }, true);
+  $scope.$watch('filter.page', function(to, from){
+    $scope.loadData(true);
+  });
+  $scope.$watch('depsFilter.category', function(to, from){
+    $scope.loadDeps();
+  });
+  $scope.$watch('depsFilter.page', function(to, from){
+    $scope.loadDeps(true);
+  });
+  //$scope.loadData();
+}]);
+angular.bootstrap(document.documentElement, ['heba.admin.accs']);
+})(jQuery);
+</script>

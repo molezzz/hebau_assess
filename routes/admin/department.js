@@ -13,7 +13,7 @@ exports.index = function(req, res){
   var Department = orm.model('department');
   switch (req.format) {
       case 'json':
-        var opts = Department.pages(req.query.page, req.query.prepage);
+        var opts = Department.pages(req.query.page, req.query.perpage);
         opts.order = 'id DESC';
         Department.search(req.query.q || {}, opts).success(function(departments){
           res.json({ total: departments.count, departments: departments.rows });

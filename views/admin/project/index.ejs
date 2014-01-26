@@ -1,5 +1,6 @@
 <% layout('../layout') -%>
 <% script('/javascripts/angular/ui-bootstrap.js') -%>
+<% script('/javascripts/moment-with-langs.js') -%>
 
 <div class="row" ng-controller="PrjsCtrl" style="height:100%;">
   <div class="col-md-12 loading-wrap">
@@ -65,6 +66,7 @@
               <th>类别</th>
               <th>类型</th>
               <th>剪裁</th>
+              <th>状态</th>
               <th>开始时间</th>
               <th>结束时间</th>
               <th>创建时间</th>
@@ -79,6 +81,7 @@
               <td ng-bind-html-unsafe="prj.category | cateName"></td>
               <td ng-bind-html-unsafe="prj.type | typeName"></td>
               <td>高分：{{prj.high_cut}} % &nbsp;&nbsp; 低分：{{prj.low_cut}} %</td>
+              <td  ng-bind-html-unsafe="prj | status"></td>
               <td>{{ prj.begin_at | date:'yyyy-MM-dd HH:mm' }}</td>
               <td>{{ prj.end_at | date:'yyyy-MM-dd HH:mm' }}</td>
               <td>{{ prj.createdAt | date:'yyyy-MM-dd HH:mm' }}</td>
@@ -259,6 +262,25 @@ app.filter('typeName', function(){
     return '<span class="label label-'+labels[val]+'">'+ types[val] +'</span>'
   }
 });
+app.filter('status', function(){
+  return function(val){
+    var now = moment(<%=(new Date()).getTime()%>);
+    var begin = moment(val.begin_at);
+    var end = moment(val.end_at);
+    var label,name;
+    if(now.isBefore(begin)){
+      label = 'default';
+      name = '未开始';
+    }else if(now.isAfter(end)){
+      label = 'danger';
+      name = '已结束';
+    }else{
+      label = 'success';
+      name = '进行中';
+    };
+    return '<span class="label label-'+label+'">'+ name +'</span>'
+  }
+});
 app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
   var opts = {
     backdrop: true,
@@ -289,7 +311,7 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
       alert('没有选择任何部门');
       return;
     }else{
-      if(confirm('确实要删除选定的'+ prjs.length +'个部门吗？')){
+      if(confirm("删除考评将删除所有已评记录！\n确实要删除选定的"+ prjs.length +'个考评吗？')){
         $http.delete('/admin/projects/'+ prjs.join('-'))
             .success(function(json, status, headers, config) {
                 if(json && json.success){
@@ -308,7 +330,7 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
   }
 
   $scope.delPrj = function(prj){
-    if(confirm('确实要删除“'+ prj.name +'"')){
+    if(confirm("删除考评将删除所有已评记录！\n确实要删除“"+ prj.name +'"')){
       $http.delete('/admin/projects/'+ prj.id)
             .success(function(json, status, headers, config) {
                 if(json && json.success){
@@ -444,11 +466,7 @@ app.controller('NewPrjCtrl',['$scope', '$modalInstance', 'data', '$http', functi
                       }
                       $scope.close();
                     }else{
-                      var errs = [];
-                      angular.forEach(json.errors, function(v, k){
-                        errs.push(k + '：' + v);
-                      });
-                      alert(json.msg + "\n\n" + errs.join("\n"));
+                      hbex.showErr(json.errors, json.msg);
                     }
                  })
                  .error(function(data, status, headers, config) {

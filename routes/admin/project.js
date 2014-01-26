@@ -72,6 +72,7 @@ exports.update = function(req, res){
   var result = {success: false, msg: ''};
 
   Project.find(projectId).success(function(project){
+    console.log(req.body.project);
     project.updateAttributes(req.body.project, ['type','category','name', 'description', 'high_cut', 'low_cut', 'begin_at', 'end_at'])
         .success(function(){
           result.msg = '更新成功';
@@ -80,12 +81,14 @@ exports.update = function(req, res){
         })
         .error(function(errors){
           result.msg = '更新失败! 写入数据库出错！';
+          result.errors = errors;
           console.log(errors);
           res.json(result);
         });
 
   }).error(function(errors){
     result.msg = '更新失败! 修改的部门不存在！';
+    result.errors = errors;
     console.log(errors);
     res.json(result);
   });
@@ -96,6 +99,7 @@ exports.destroy = function(req, res){
   var projects = req.params.project.split('-');
   var Project = orm.model('project');
   var result = {success: false, msg: ''};
+  //TODO 删除相关数据
   Project.destroy({id: projects})
       .success(function(){
         result.msg = '考评已删除！';

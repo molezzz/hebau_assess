@@ -15,7 +15,7 @@ module.exports = {
         notEmpty: { msg: '名称不能为空'}
       }
     },
-    key: { type: Seq.STRING, allowNull: false, comment: '英文键值'},
+    key: { type: Seq.STRING, allowNull: false, unique: true, comment: '英文键值'},
     scale: {
       type: Seq.INTEGER.UNSIGNED, allowNull: false, defaultValue: 100,
       comment: '分值占比 0-100',
@@ -40,7 +40,7 @@ module.exports = {
         if(rule.parent_id){
           key += 'R' + rule.parent_id;
         };
-        key += '-' + now.format('DDHHmm');
+        //key += '-' + now.format('DDHHmm');
         rule.key = key + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
         return next(null, rule);
       }
