@@ -8,7 +8,7 @@
 
     <div class="row" style="padding:0 10px;">
       <ul class="nav nav-tabs">
-        <li class="active"><a href="#"><%=title%></a></li>
+        <li class="active"><a href="#"><%=title%> <span class="label label-default" ng-show="filter.department">{{filter.department.name}}</span></a></li>
       </ul>
       <div class="navbar navbar-default" role="navigation" style="margin-top:3px;">
         <!-- Brand and toggle get grouped for better mobile display -->
@@ -31,6 +31,14 @@
           <div class="btn-group navbar-right">
             <button type="button" title="刷新" class="btn btn-default navbar-btn btn-sm" ng-click="loadData()"><span class="glyphicon glyphicon-refresh"></span></button>
           </div>
+
+          <form class="navbar-form navbar-right" role="search">
+            <div class="form-group">
+              <input type="text" class="form-control input-sm" placeholder="输入账号" ng-model="filter.name"/>
+            </div>
+            <button type="submit" class="btn btn-default btn-sm" ng-click="loadData()">搜索</button>
+          </form>
+
           <div class="btn-group navbar-right">
 
           </div>
@@ -67,7 +75,7 @@
           </div>
           <div class="panel-footer clearfix">
             <div class="pull-left">
-              {{wizardStatus}}
+
             </div>
             <div class="pull-right">
               <button type="button" class="btn btn-primary" ng-click="wizardStart()">开始生成</button>
@@ -109,9 +117,6 @@
         </div>
       </div>
       <div class="col-sm-8">
-        <div class="page-header">
-          <h2>账户列表 <small ng-show="filter.department">[ {{filter.department.name}} ]</small></h2>
-        </div>
         <div class="alert alert-warning" style="margin-top: 1em;" ng-show="loading">
           <strong><i class="fa fa-spinner fa-spin"></i></strong>
           数据加载中...
@@ -121,6 +126,7 @@
             <tr>
               <th></th>
               <th>#</th>
+              <th>部门</th>
               <th>帐户名</th>
               <th>分组</th>
               <th>有效</th>
@@ -132,12 +138,17 @@
             <tr ng-repeat="acc in accs">
               <td><input type="checkbox" ng-model="acc.checked" ng-checked="acc.checked"/></td>
               <td>{{ acc.id }}</td>
+              <td>{{ acc.department.name }}</td>
               <td>{{ acc.name }}</td>
               <td>{{ acc.group_key }}</td>
-              <td>{{ !acc.invalid }}</td>
+              <td><span class="label" ng-class="{'label-success': !acc.invalid, 'label-danger': acc.invalid}">{{ acc.invalid | accStatus }}</span></td>
               <td>{{ acc.last_login_at | date:'yyyy-MM-dd' }}</td>
               <td>{{ acc.last_login_ip }}</td>
-              <td></td>
+              <td>
+                <button ng-show="!acc.invalid" class="btn btn-default btn-sm" title="禁用账户" ng-click="disableAcc(acc)"><i class="glyphicon glyphicon-ban-circle"></i></button>
+                <button ng-show="acc.invalid" class="btn btn-default btn-sm" title="解禁账户" ng-click="disableAcc(acc, true)"><i class="glyphicon glyphicon-ok"></i></button>
+                <button class="btn btn-default btn-sm" title="删除账户" ng-click="delAcc(acc)"><i class="glyphicon glyphicon-trash"></i></button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -157,6 +168,28 @@
   </div>
 </div>
 
+<script type="text/ng-template" id="dialog.tpl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" ng-click="close()">&times;</button>
+        <h4 class="modal-title" ng-hide="data.current == data.total">正在保存...</h4>
+        <h4 class="modal-title" ng-show="data.current == data.total">已完成</h4>
+      </div>
+      <div class="modal-body">
+        <h4>当前进度：</h4>
+        <progressbar class="progress-striped active" max="100" value="data.percent" type="danger"><i>{{data.current}} / {{data.total}}</i></progressbar>
+      </div>
+      <div class="modal-footer clearfix">
+        <div class="pull-left">
+          {{ data.msg }}
+        </div>
+        <div class="pull-right" ng-show="data.current == data.total">
+          <button class="btn btn-primary" ng-click="close()">确定</button>
+        </div>
+      </div>
+    </div><!-- /.modal-content -->
+</script>
+
 <script type="text/javascript">
 (function($){
 var cates = <%- JSON.stringify(cates) %>;
@@ -172,7 +205,26 @@ app.filter('cateName', function(){
     return '<span class="label label-'+labels[val]+'">'+ cates[val] +'</span>'
   }
 });
-app.controller('AccsCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
+app.filter('accStatus', function(){
+  return function(val){
+    return val ? '否' : '是';
+  }
+});
+app.factory('wizardSS', function($rootScope) {
+  var sharedService = {
+    msg: '',
+    total: 0,
+    current: 0
+  };
+
+  sharedService.statusChange = function(status) {
+    //console.log('wizardChange');
+    $rootScope.$broadcast('wizardChange');
+  };
+
+  return sharedService;
+});
+app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($scope, $modal, $http, wizardSS){
 
   $scope.deps = [];
   $scope.depsTotal = 0;
@@ -187,7 +239,6 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
   $scope.onWizard = false;
   $scope.wizardDeps = {};
   $scope.wLoading = false;
-  $scope.wizardStatus = '';
 
   $scope.accWizard = function(){
     $scope.onWizard = true;
@@ -210,21 +261,22 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
 
   $scope.showCateAcc = function(dep){
     $scope.filter.department = dep;
+    $scope.filter.name = '';
   };
 
   $scope.delAll = function(){
-    var deps = [];
-    angular.forEach($scope.deps, function(dep, key){
-      if(dep.checked) {
-        deps.push(dep.id);
+    var accs = [];
+    angular.forEach($scope.accs, function(acc, key){
+      if(acc.checked) {
+        accs.push(acc.id);
       }
     });
-    if(deps.length < 1){
-      alert('没有选择任何部门');
+    if(accs.length < 1){
+      alert('没有选择账户');
       return;
     }else{
-      if(confirm('确实要删除选定的'+ deps.length +'个部门吗？')){
-        $http.delete('/admin/departments/'+ deps.join('-'))
+      if(confirm('删除账户将同时删除投票结果，确实要删除选定的'+ accs.length +'个账户吗？')){
+        $http.delete('/admin/accounts/'+ accs.join('-'))
             .success(function(json, status, headers, config) {
                 if(json && json.success){
                   alert(json.msg);
@@ -241,9 +293,9 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
     }
   }
 
-  $scope.delAcc = function(dep){
-    if(confirm('确实要删除“'+ dep.name +'"')){
-      $http.delete('/admin/departments/'+ dep.id)
+  $scope.delAcc = function(acc){
+    if(confirm('删除账户将同时删除投票结果，确实要删除“'+ acc.name +'"吗？')){
+      $http.delete('/admin/accounts/'+ acc.id)
             .success(function(json, status, headers, config) {
                 if(json && json.success){
                   alert(json.msg);
@@ -259,21 +311,34 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
     }
   }
 
-  $scope.editAcc = function(dep){
-    var data = {
-      title: '重命名',
-      dep: dep,
-      edit: true,
-      callback: function(){
-        $scope.loadData();
+  $scope.disableAcc = function(acc, enable){
+    $http({
+      method: 'PUT',
+      url: '/admin/accounts/' + acc.id,
+      data: { account: { invalid: enable ? false : true } }
+    })
+    .success(function(json, status, headers, config) {
+      if(json && json.success){
+        alert(json.msg);
+        acc.invalid = json.account.invalid;
+      }else{
+        alert(json.msg);
       }
-    }
-    $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
+    })
+    .error(function(data, status, headers, config) {
+      alert(data);
+      console.log(data);
+    });
   };
 
   $scope.loadData = function(keepPage){
     var query = {};
     $scope.loading = true;
+    if($scope.filter.name != ''){
+      query['q[name_like]'] = $scope.filter.name;
+      //清空部门
+      $scope.filter.department = null;
+    };
     if($scope.filter.department !== null && $scope.filter.department.id != 0){
       query['q[department_id_eq]'] = $scope.filter.department.id;
     };
@@ -323,13 +388,7 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
   };
 
   $scope.newAcc = function(){
-    var data = {
-      title: '添加部门',
-      callback: function(){
-        $scope.loadData();
-      }
-    }
-    $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
+
   };
 
   $scope.numPages = function(){
@@ -337,15 +396,35 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
   };
 
   $scope.wizardStart = function(){
+    var deps = {};
+    var _blank = true;
+    var opts = {
+      backdrop: true,
+      keyboard: false,
+      templateUrl: 'dialog.tpl',
+      controller: 'dialogCtrl',
+      scope: $scope
+    };
+    angular.forEach($scope.wizardDeps, function(group, key){
+      angular.forEach(group, function(dep, k){
+        dep.total = 200;
+        if(dep.total > 0){
+          deps[dep.id] = dep.total;
+          _blank = false;
+        };
+      });
+    });
+    if(_blank){ alert('至少需要一个部门的数量大于0！'); return; };
     var parser = document.createElement('a');
     parser.href = window.location;
+    $modal.open(opts);
     var socket = io.connect(parser.protocol + '//' + parser.host);
     socket.on('account_server_ok', function (data) {
-      console.log(data);
-      $scope.wizardStatus = data.msg;
-      $scope.$digest();
-      $http.post('/admin/accounts/wizard/run',{ deps: [], cid: data.cid})
+      wizardSS.msg = data.msg;
+      wizardSS.statusChange();
+      $http.post('/admin/accounts/wizard/run',{ deps: deps, cid: data.cid})
       .success(function(json, status, headers, config){
+        $scope.onWizard = false;
         socket.disconnect();
       }).error(function(data){
         console.log(data);
@@ -354,8 +433,14 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
       });
     });
     socket.on('account_status', function(data){
-      $scope.wizardStatus = data.msg;
-      $scope.$digest();
+      wizardSS.msg = data.msg;
+      if(data.total) {
+        wizardSS.total = data.total;
+      };
+      if(data.count){
+        wizardSS.current += data.count;
+      };
+      wizardSS.statusChange();
     });
   };
 
@@ -376,6 +461,26 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
     $scope.loadDeps(true);
   });
   //$scope.loadData();
+}]);
+
+app.controller('dialogCtrl',['$scope', '$modalInstance', '$http', 'wizardSS', function($scope, modal, $http, wizardSS){
+  $scope.data = {
+    msg: '连接服务器...',
+    total: 0,
+    current: 0,
+    percent: 0
+  };
+  $scope.close = function(){
+    modal.close();
+  };
+  $scope.$on('wizardChange', function() {
+    $scope.data.msg = wizardSS.msg;
+    $scope.data.total = wizardSS.total;
+    $scope.data.current = wizardSS.current;
+    $scope.data.percent = Math.ceil(($scope.data.current / $scope.data.total) * 100);
+    //console.log('change', $scope.data);
+    $scope.$digest();
+  });
 }]);
 angular.bootstrap(document.documentElement, ['heba.admin.accs']);
 })(jQuery);
