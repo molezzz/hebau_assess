@@ -4,7 +4,9 @@ var ex = require('lodash');
 
 var positions = {
   '0': '正处级',
-  '1': '副处级'
+  '1': '副处级',
+  '2': '正科级',
+  '3': '副科级'
 };
 
 module.exports = {

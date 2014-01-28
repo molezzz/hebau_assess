@@ -1,7 +1,6 @@
 <% layout('../layout') -%>
 <% script('/javascripts/angular/ui-bootstrap.js') -%>
 <% script('/javascripts/socket.io.min.js') -%>
-<% stylesheet('/stylesheets/font-awesome.min.css') -%>
 
 <div class="row" ng-controller="AccsCtrl" style="height:100%;">
   <div class="col-md-12 loading-wrap">
@@ -467,7 +466,7 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
     };
     angular.forEach($scope.wizardDeps, function(group, key){
       angular.forEach(group, function(dep, k){
-        dep.total = (200 - Math.ceil(Math.random() * 50));
+        //dep.total = (200 - Math.ceil(Math.random() * 50));
         if(dep.total > 0){
           deps[dep.id] = dep.total;
           _blank = false;

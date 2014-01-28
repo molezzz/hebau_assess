@@ -1,0 +1,370 @@
+<% layout('../layout') -%>
+<% script('/javascripts/angular/ui-bootstrap.js') -%>
+
+<div class="row" ng-controller="MembersCtrl" style="height:100%;">
+  <div class="col-md-12 loading-wrap">
+    <div class="row">
+      <ul class="nav nav-tabs">
+        <li class="active"><a href="#"><%=title%> <span class="label label-default" ng-show="filter.department">{{filter.department.name}}</span></a></li>
+      </ul>
+      <div class="navbar navbar-default" role="navigation" style="margin-top:3px;">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse">
+          <div class="btn-group navbar-left" >
+            <button type="button" class="btn btn-default navbar-btn btn-sm" ng-click="newMember()"><span class="glyphicon glyphicon-plus-sign"></span> 添加</button>
+            <!--button type="button" class="btn btn-danger navbar-btn btn-sm" ng-click="delAll()"><span class="glyphicon glyphicon-trash"></span> 删除</button-->
+          </div>
+
+          <div class="btn-group navbar-right">
+            <button type="button" title="刷新" class="btn btn-default navbar-btn btn-sm" ng-click="loadData()"><span class="glyphicon glyphicon-refresh"></span></button>
+          </div>
+
+          <form class="navbar-form navbar-right" role="search">
+            <div class="form-group">
+              <input type="text" class="form-control input-sm" placeholder="输入姓名" ng-model="filter.name"/>
+            </div>
+            <button type="submit" class="btn btn-default btn-sm" ng-click="loadData()">搜索</button>
+          </form>
+
+          <div class="btn-group navbar-right">
+            <button type="button" class="btn btn-default navbar-btn btn-sm" ng-model="filter.position" btn-radio="'ALL'">全部</button>
+            <button ng-repeat="(key, value) in positions" type="button" class="btn btn-default navbar-btn btn-sm" ng-model="filter.position" btn-radio="{{key}}">{{value}}</button>
+          </div>
+
+        </div><!-- /.navbar-collapse -->
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-2">
+         <accordion close-others="true">
+           <accordion-group is-open="isopen" ng-repeat="(id, group) in depGroups">
+              <accordion-heading>
+                {{group.name}}
+                <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': isopen, 'glyphicon-chevron-right': !isopen}"></i>
+              </accordion-heading>
+              <div class="row"  style="padding:0 1em; max-height: 29em;overflow: auto;">
+                <div class="list-group">
+                  <a class="list-group-item" ng-repeat="dep in group.departments" ng-click="changeDep(dep)" ng-class="{active: filter.department.id == dep.id}">{{dep.name}}</a>
+                </div>
+              </div>
+           </accordion-group>
+         </accordion>
+      </div><!-- col-md-2 -->
+
+      <div class="col-md-10">
+        <div class="page-header" style="margin-top: 0">
+          <h4>人员列表</h4>
+        </div>
+        <div class="alert alert-warning" style="margin-top: 1em;" ng-show="loading">
+          <strong><i class="fa fa-spinner fa-spin"></i></strong>
+          数据加载中...
+        </div>
+        <div class="panel panel-default" ng-repeat="(key, member) in members">
+          <div class="panel-body" ng-click="setEdit(member)">
+            <div class="media">
+              <a class="pull-left" href="#">
+                <img class="media-object" alt="64x64" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABTElEQVR4Xu2YQQ7DIAwE4ZSHJc/Om3LPKRUHtzSFVBgQlpgeQ2Ps1bLT4o/juNzEH48AOIAjQAZMnIGOEIQCUAAKQAEoMLECYBAMgkEwCAYnhgB/hsAgGASDYBAMgsGJFQCDLTC47/vbQ9u2/fhJ1lNrOfP1qJnaq9oB8XCpQf8NkmqqR82c0FUChEa9925d12yKlArQo+ZTxDUR4Lo+JI1tHg8fmpA1eb4sizvP8+v4iAClNbU5Xi2AbByGy1k3dzRiAe7iiGAlNTUiVAsQH4FUs/emUg65P6upWSpCNwHiRkodkBPgX83S4cP3qwQIBXLnXJpJrT9lgLamZvgmAmg3tvJetQOsDKLtAwFa/BTWqm/hPRyAA7gT5E6QO0ELaTyqBygABaAAFIACoxLYwr5QAApAASgABSyk8ageoAAUgAJQAAqMSmAL+74A0deRkB1poOYAAAAASUVORK5CYII=" style="width: 64px; height: 64px;">
+              </a>
+              <div class="media-body">
+                <h4 class="media-heading">{{member.name}}</h4>
+                <p>
+                  <span class="label label-default">{{member.department.name}}</span>
+                  <span class="label" ng-class="{'label-danger': 0 == member.position_id, 'label-warning': 1 == member.position_id, 'label-success': 2 == member.position_id, 'label-info': 3 == member.position_id}">{{positions[member.position_id]}}</span>
+                </p>
+                <p>{{member.description}}</p>
+              </div>
+            </div><!-- media -->
+            <div class="btn-group btn-group-justified" style="margin-top: 1em;" ng-show="member.edit">
+              <a class="btn btn-default" role="button" ng-click="editMember(member)"><i class="glyphicon glyphicon-edit"></i> 编辑</a>
+              <a class="btn btn-danger" role="button" ng-click="delMember(member)"><i class="glyphicon glyphicon-trash"></i> 删除</a>
+            </div>
+          </div>
+        </div><!-- panel -->
+      </div><!-- col-md-10 -->
+
+    </div>
+
+  </div><!-- col-md-12 -->
+  <div class="navbar navbar-default navbar-fixed-bottom">
+    <div class="navbar-header">
+      <span class="navbar-brand">总计: {{ membersTotal }} 条记录 第{{ filter.page }}页/共{{ numPages() }}页</span>
+    </div>
+    <div class="collapse navbar-collapse">
+       <div class="navbar-right">
+        <pagination total-items="membersTotal" items-per-page="perpage" page="filter.page" max-size="15" class="pagination-sm" boundary-links="true" rotate="false" previous-text="'&laquo;上一页'" next-text="'下一页&raquo;'" last-text="尾页" first-text="首页"></pagination>
+       </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/ng-template" id="newMemberDialog.tpl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" ng-click="close()">&times;</button>
+        <h4 class="modal-title">{{title}}</h4>
+      </div>
+      <div class="modal-body">
+        <form name="member_form" novalidate role="form">
+          {{setForm(member_form)}}
+          <div class="form-group">
+            <label>姓名</label>
+            <input type="text" name="name" ng-model="member.name" class="form-control" required placeholder="填写姓名">
+            <p ng-show="post && member_form.name.$error.required" class="help-block">
+              <span class="label label-danger">姓名 不能为空！</span>
+            </p>
+          </div>
+          <div class="form-group">
+            <label>所属机构</label>
+            <select name="department_id" ng-model="member.department_id" ng-options="d.id as d.name group by d.g for d in deps" class="form-control" required >
+              <option value="">选择机构</option>
+            </select>
+            <p ng-show="post && member_form.department_id.$error.required" class="help-block">
+              <span class="label label-danger">请选择所属类别！</span>
+            </p>
+          </div>
+          <div class="form-group">
+            <label>级别</label>
+            <select name="position_id" ng-model="member.position_id" ng-options="k as v for (k,v) in positions" class="form-control" required >
+              <option value="">选择级别</option>
+            </select>
+            <p ng-show="post && member_form.position_id.$error.required" class="help-block">
+              <span class="label label-danger">请选择级别！</span>
+            </p>
+          </div>
+          <div class="form-group">
+            <label>详细职务描述及其他说明</label>
+            <textarea name="description" rows="8" ng-model="member.description" class="form-control" placeholder="详细职务描述，该说明会显示在前台考核页面。"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" ng-click="close()">关闭</button>
+        <button type="button" class="btn btn-primary" ng-click="submit()">保存</button>
+      </div>
+    </div><!-- /.modal-content -->
+</script>
+<script type="text/javascript">
+(function($){
+var depGroups = <%- JSON.stringify(depGroups) %>;
+var positions = <%- JSON.stringify(positions) %>;
+var deps = [];
+angular.forEach(depGroups, function(v, key){
+  angular.forEach(v.departments, function(dep, idx){
+    deps.push({id: dep.id, name: dep.name, g: v.name});
+  });
+});
+var app = angular.module('heba.admin.members', ['ui.bootstrap'], angular.noop);
+app.filter('cateName', function(){
+  var labels = {
+    '0': 'default',
+    '1': 'primary',
+    '2': 'info',
+    '3': 'success'
+  }
+  return function(val){
+    return '<span class="label label-'+labels[val]+'">'+ cates[val] +'</span>'
+  }
+});
+app.controller('MembersCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
+  var opts = {
+    backdrop: true,
+    keyboard: true,
+    templateUrl: 'newMemberDialog.tpl',
+    controller: 'NewMemberCtrl',
+    resolve: { data: function(){
+      return {};
+    }}
+  };
+
+  $scope.members = [];
+  $scope.membersTotal = 0;
+  $scope.loading = false;
+  $scope.filter = { name: '', department: null, page: 1, position: 'ALL' };
+  $scope.depGroups = depGroups;
+  $scope.positions = positions;
+  $scope.perpage = 20;
+
+  $scope.changeDep = function(dep){
+    $scope.filter.department = dep;
+    //清除姓名
+    $scope.filter.name = '';
+  };
+
+  $scope.delAll = function(){
+    var members = [];
+    angular.forEach($scope.members, function(member, key){
+      if(member.checked) {
+        members.push(member.id);
+      }
+    });
+    if(members.length < 1){
+      alert('没有选择人');
+      return;
+    }else{
+      if(confirm('确实要删除选定的'+ members.length +'个人吗？')){
+        $http.delete('/admin/members/'+ members.join('-'))
+            .success(function(json, status, headers, config) {
+                if(json && json.success){
+                  alert(json.msg);
+                  $scope.loadData();
+                }else{
+                  alert(json.msg);
+                }
+             })
+             .error(function(data, status, headers, config) {
+                alert(data);
+                console.log(data);
+             });
+      }
+    }
+  }
+
+  $scope.delMember = function(member){
+    if(confirm('确实要删除“'+ member.name +'"吗？')){
+      $http.delete('/admin/members/'+ member.id)
+            .success(function(json, status, headers, config) {
+                if(json && json.success){
+                  alert(json.msg);
+                  $scope.loadData();
+                }else{
+                  alert(json.msg);
+                }
+             })
+             .error(function(data, status, headers, config) {
+                alert(data);
+                console.log(data);
+             });
+    }
+  }
+
+  $scope.editMember = function(member){
+    var data = {
+      title: '修改人员信息',
+      member: member,
+      edit: true,
+      callback: function(){
+        $scope.loadData();
+      }
+    }
+    $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
+  };
+
+  $scope.loadData = function(keepPage){
+    var query = {};
+    $scope.loading = true;
+
+    if($scope.filter.name != ''){
+      query['q[name_like]'] = $scope.filter.name;
+      $scope.filter.position = 'ALL';
+      $scope.filter.department = null;
+    };
+    if($scope.filter.position !== undefined && $scope.filter.position != 'ALL'){
+      query['q[position_id_eq]'] = $scope.filter.position;
+    };
+    if($scope.filter.department){
+      query['q[department_id_eq]'] = $scope.filter.department.id;
+    };
+    if(!keepPage){
+      $scope.filter.page = 1;
+    }
+    query.page = $scope.filter.page;
+    query.perpage = $scope.perpage;
+    $http.get('/admin/members.json?' + $.param(query))
+         .success(function(json, status, headers, config) {
+            $scope.members = json.members;
+            $scope.membersTotal = json.total;
+            $scope.loading = false;
+         })
+         .error(function(data, status, headers, config) {
+            alert(data);
+            console.log(data);
+            $scope.loading = false;
+         });
+  };
+  $scope.setEdit = function(member){
+    member.edit = !member.edit;
+  }
+  $scope.newMember = function(){
+    var data = {
+      title: '添加人员',
+      callback: function(){
+        $scope.loadData();
+      }
+    }
+    $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
+  };
+
+  $scope.numPages = function(){
+    return Math.max(Math.ceil($scope.membersTotal / $scope.perpage), 1);
+  };
+
+  $scope.$watch('filter.position', function(to, from){
+    $scope.loadData();
+    $scope.filter.name = '';
+  });
+  $scope.$watch('filter.department', function(to, from){
+    $scope.loadData();
+  });
+  $scope.$watch('filter.page', function(to, from){
+    $scope.loadData(true);
+  });
+  $scope.loadData();
+}]);
+
+app.controller('NewMemberCtrl',['$scope', '$modalInstance', 'data', '$http', function($scope, modal, data, $http){
+  $scope.title = data.title || '';
+  $scope.member = $.extend({}, data.member);
+  $scope.post = false;
+  $scope.deps = deps;
+  $scope.positions = positions;
+
+  //modal bug 无法获取自身scope的form
+  $scope.setForm = function(form){
+    $scope.memberForm = form;
+  };
+
+  $scope.close = function(){
+    modal.close();
+  }
+
+  $scope.submit = function(){
+    $scope.post = true;
+    if($scope.memberForm.$invalid){ return false;}
+    var config = { method: 'POST', url: '/admin/members/', data: { member: $scope.member}};
+
+    if(data.edit){
+      config.method = 'PUT';
+      config.url = '/admin/members/' + $scope.member.id;
+    }
+
+    $http(config).success(function(json, status, headers, config) {
+                    if(json && json.success){
+                      alert(json.msg);
+                      if(data.callback){
+                        data.callback();
+                      }
+                      $scope.close();
+                    }else{
+                      alert(json.msg);
+                    }
+                 })
+                 .error(function(data, status, headers, config) {
+                    alert(data);
+                    console.log(data);
+                 });
+  }
+}]);
+angular.bootstrap(document.documentElement, ['heba.admin.members']);
+})(jQuery);
+</script>

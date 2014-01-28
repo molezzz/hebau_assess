@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel='stylesheet' href='/stylesheets/style.css' />
     <link rel='stylesheet' href='/stylesheets/bootstrap.min.css' />
+    <link rel='stylesheet' href='/stylesheets/font-awesome.min.css' />
     <!-- link rel='stylesheet' href='/stylesheets/bootstrap-theme.min.css' /-->
     <!--link rel='stylesheet' href='/stylesheets/bootstrap-flat-theme.css' /-->
     <script type="text/javascript" src="/javascripts/jquery.min.js"></script>
@@ -52,6 +53,7 @@
           <li class="<%= typeof dashboardMenuActive == 'undefined' ? '' : 'active'%>"><a href="#">首页</a></li>
           <li class="<%= typeof userMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/users">用户</a></li>
           <li class="<%= typeof departmentMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/departments">部门</a></li>
+          <li class="<%= typeof memberMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/members">人员</a></li>
           <li class="<%= typeof projectMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/projects">考评</a></li>
           <li class="<%= typeof accountMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/accounts">账号</a></li>
         </ul>
