@@ -23,13 +23,20 @@
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse">
-          <div class="btn-group navbar-left" >
-            <button type="button" class="btn btn-default navbar-btn btn-sm" ng-click="accWizard()"><span class="fa fa-users"></span> 生成向导</button>
-            <button type="button" class="btn btn-danger navbar-btn btn-sm" ng-click="delAll()"><span class="glyphicon glyphicon-trash"></span> 删除</button>
+          <div class="navbar-left">
+            <div class="btn-group" >
+              <button ng-show="filter.department" type="button" class="btn btn-default navbar-btn btn-sm" ng-click="addAccTo(filter.department)"><span class="glyphicon glyphicon-plus-sign"></span> 添加账户</button>
+            </div>
+            <div class="btn-group">
+              <button type="button" class="btn btn-default navbar-btn btn-sm" ng-click="accWizard()"><span class="fa fa-users"></span> 生成向导</button>
+              <button type="button" class="btn btn-default navbar-btn btn-sm" ng-click="disableAll()"><span class="glyphicon glyphicon-ban-circle"></span> 禁用所有账户</button>
+              <button type="button" class="btn btn-danger navbar-btn btn-sm" ng-click="delAll()"><span class="glyphicon glyphicon-trash"></span> 删除</button>
+            </div>
           </div>
 
           <div class="btn-group navbar-right">
             <button type="button" title="刷新" class="btn btn-default navbar-btn btn-sm" ng-click="loadData()"><span class="glyphicon glyphicon-refresh"></span></button>
+            <button type="button" title="导出所有有效账户" class="btn btn-default navbar-btn btn-sm" ng-click="export()"><span class="glyphicon glyphicon-share"></span></button>
           </div>
 
           <form class="navbar-form navbar-right" role="search">
@@ -139,7 +146,10 @@
               <td><input type="checkbox" ng-model="acc.checked" ng-checked="acc.checked"/></td>
               <td>{{ acc.id }}</td>
               <td>{{ acc.department.name }}</td>
-              <td>{{ acc.name }}</td>
+              <td>
+                {{ acc.name }}
+                <span class="label label-danger" ng-show="accsNew[acc.name]">New</span>
+              </td>
               <td>{{ acc.group_key }}</td>
               <td><span class="label" ng-class="{'label-success': !acc.invalid, 'label-danger': acc.invalid}">{{ acc.invalid | accStatus }}</span></td>
               <td>{{ acc.last_login_at | date:'yyyy-MM-dd' }}</td>
@@ -229,6 +239,7 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
   $scope.deps = [];
   $scope.depsTotal = 0;
   $scope.accs = [];
+  $scope.accsNew = {};
   $scope.accsTotal = 0;
   $scope.dpLoading = false;
   $scope.filter = { name: '', department: null, page: 1 };
@@ -239,6 +250,33 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
   $scope.onWizard = false;
   $scope.wizardDeps = {};
   $scope.wLoading = false;
+
+  $scope.addAccTo = function(dep){
+    if(!dep){
+      alert('请先选择部门！');
+      return;
+    };
+    var count = parseInt(prompt('向“'+ dep.name +'”添加账户，请输入数量：', 1));
+    if(count > 0) {
+      $http.post('/admin/accounts',{account: { department_id: dep.id, count: count}})
+      .success(function(json, status, headers, config){
+        if(json.success){
+          alert(json.msg);
+          $scope.accsNew = {};
+          angular.forEach(json.accounts, function(acc, key){
+            $scope.accsNew[acc.name] = true;
+          });
+          $scope.loadData();
+        }else{
+          hbex.showErr(json.errors, json.msg);
+        };
+      })
+      .error(function(data, status, headers, config) {
+          alert(data);
+          console.log(data);
+       });
+    };
+  };
 
   $scope.accWizard = function(){
     $scope.onWizard = true;
@@ -257,6 +295,28 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
 
   $scope.changeCate = function(id){
     $scope.depsFilter.category = id;
+  };
+
+  $scope.disableAll = function(){
+    if(confirm('禁用所有已存在的账户，将导致已生成所有账户不能登陆，确定禁用吗？')){
+      $http.put('/admin/accounts/disable/all')
+      .success(function(json, status, headers, config) {
+          if(json && json.success){
+            alert(json.msg);
+            $scope.loadData();
+          }else{
+            alert(json.msg);
+          }
+       })
+       .error(function(data, status, headers, config) {
+          alert(data);
+          console.log(data);
+       });
+    };
+  };
+
+  $scope.export = function(){
+    window.open('/admin/accounts/excel');
   };
 
   $scope.showCateAcc = function(dep){
@@ -407,7 +467,7 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
     };
     angular.forEach($scope.wizardDeps, function(group, key){
       angular.forEach(group, function(dep, k){
-        dep.total = 200;
+        dep.total = (200 - Math.ceil(Math.random() * 50));
         if(dep.total > 0){
           deps[dep.id] = dep.total;
           _blank = false;

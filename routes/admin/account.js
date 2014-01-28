@@ -5,6 +5,7 @@ var ex = require('lodash');
 var moment = require('moment');
 var orm = require('../../lib/seq-models');
 var rnds = require('randomstring');
+var nodeExcel = require('excel-export');
 
 var shared = {
   accountMenuActive: 'active'
@@ -112,15 +113,55 @@ exports.new = function(req, res){
 
 exports.create = function(req, res){
   var Account = orm.model('account');
-  var account = req.body['account'];
+  var params = req.body['account'];
   var result = {
     success: false,
     msg: ''
   };
+  //TODO 检测department是否存在
+  //查找当前批次账户
+  Account.find({where: { department_id: params.department_id }, limit: 1, order: 'id DESC'})
+  .success(function(account){
+    var prefix = '';
+    var groupKey = '';
+    var accs = [];
+    if(account){
+      prefix = account.name.split('-')[0];
+      groupKey = account.group_key;
+    };
+    if(prefix == ''){
+      prefix = rnds.generate(2);
+    };
+    if(groupKey == ''){
+      groupKey = moment().format('YYYYMMDD');
+    };
+    for (var i = 0; i < parseInt(params.count); i++) {
+      accs.push({
+        name: (prefix + '-' + rnds.generate(6)).toLowerCase(),
+        department_id: params.department_id,
+        group_key: groupKey,
+        invalid: false
+      });
+    };
+    Account.bulkCreate(accs).success(function(){
+      result.msg = '添加成功';
+      result.success = true;
+      result.accounts = accs;
+      res.json(result);
+    }).error(function(errors){
+      result.msg = '添加失败';
+      result.errors = errors;
+      console.log(errors);
+      res.json(result);
+    });
+  }).error(function(errors){
+    result.msg = '添加失败';
+    result.errors = errors;
+    console.log(errors);
+    res.json(result);
+  });
 
-  //新版Sequelize将会实现hooks。之前临时采用手动的办法
-  account = Account.build(account);
-
+  /*
   account.save().success(function(account){
     result.success = true;
     result.msg = '新部门添加成功！';
@@ -131,7 +172,7 @@ exports.create = function(req, res){
     console.log(errors);
     res.json(result);
   });
-
+  */
 };
 
 exports.show = function(req, res){
@@ -169,6 +210,22 @@ exports.update = function(req, res){
 
 };
 
+exports.disableAll = function(req, res){
+  var Account = orm.model('account');
+  var result = {success: false, msg: ''};
+  Account.update({ invalid: true },{ invalid: false })
+  .success(function(){
+    result.msg = '操作成功';
+    result.success = true;
+    res.json(result);
+  })
+  .error(function(errors){
+    result.msg = '操作失败! 写入数据库出错！';
+    console.log(errors);
+    res.json(result);
+  });
+};
+
 exports.destroy = function(req, res){
   var accounts = req.params.account.split('-');
   var Account = orm.model('account');
@@ -186,4 +243,54 @@ exports.destroy = function(req, res){
         res.json(result);
       });
 
+};
+
+exports.excel = function(req, res){
+  var conf ={};
+  var Account = orm.model('account');
+  var Department = orm.model('department');
+
+  conf.stylesXmlFile = 'views/admin/styles.xml';
+  conf.cols = [{
+      caption:'帐户名',
+      type:'string',
+      width:16
+  },{
+      caption:'部门',
+      type:'string',
+      width: 10
+  },{
+      caption:'有效',
+      type:'bool'
+  },{
+      caption:'分组',
+       type:'string'
+  }];
+  conf.rows = [];
+  Department.findAll({
+    attributes: ['id', 'name']
+  }).success(function(deps){
+    var dHash = {};
+    ex.forEach(deps, function(dep){
+      dHash[dep.id] = dep.name;
+    });
+    Account.findAll({
+      where: { invalid: false } ,
+      attributes: ['name', 'department_id', 'invalid', 'group_key'],
+      order: 'department_id DESC'
+    }).success(function(accounts){
+      ex.forEach(accounts, function(acc){
+        conf.rows.push([acc.name, dHash[acc.department_id], !acc.invalid , acc.group_key]);
+      });
+      //console.log(conf);
+      var result = nodeExcel.execute(conf);
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats');
+      res.setHeader("Content-Disposition", "attachment; filename=" + "accounts.xlsx");
+      res.end(result, 'binary');
+    }).error(function(errors){
+      res.json({success: false, msg: '导出失败', errors: errors});
+    });
+  }).error(function(errors){
+    res.json({success: false, msg: '导出失败', errors: errors});
+  });
 };
