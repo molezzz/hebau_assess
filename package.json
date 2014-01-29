@@ -21,6 +21,7 @@
     "moment-timezone": "*",
     "sequelize": "2.x",
     "socket.io": "latest",
-    "excel-export": "latest"
+    "excel-export": "latest",
+    "connect-flash": "latest"
   }
 }

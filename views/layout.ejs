@@ -1,12 +1,48 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-    <%-scripts%>
-    <%-stylesheets%>
-  </head>
-  <body>
-    <%- body %>
-  </body>
+<head>
+<meta charset="utf-8"/>
+<title><%= title %></title>
+<meta name="keywords" content=""/>
+<meta name="description" content=""/>
+<meta name="viewport" content="width=device-width"/>
+<link rel="stylesheet" href="/stylesheets/front.css"/>
+<!--link rel="shortcut icon" href="img/favicon.ico"/>
+<link rel="apple-touch-icon" href="img/touchicon.png"/-->
+<script type="text/javascript" src="/javascripts/angular/angular.min.js"></script>
+<script type="text/javascript" src="/javascripts/angular/angular-locale_zh-cn.js"></script>
+<!--[if lt IE 9]><script src="/javascripts/json2.js"></script><![endif]-->
+<!--[if lte IE 8]>
+  <script type="text/javascript">
+    document.createElement('ng-include');
+    document.createElement('ng-pluralize');
+    document.createElement('ng-view');
+
+    // Optionally these for CSS
+    document.createElement('ng:include');
+    document.createElement('ng:pluralize');
+    document.createElement('ng:view');
+  </script>
+<![endif]-->
+<!--[if IE 6]>
+<script type="text/javascript">
+document.execCommand("BackgroundImageCache", false, true);
+</script>
+<![endif]-->
+<%-scripts%>
+<%-stylesheets%>
+</head>
+<body>
+  <div class="g-hd">
+
+  </div>
+  <div class="g-nv f-usn"><div class="g-in"><ul class="m-nav"> </ul></div></div>
+  <%- body %>
+  <div class="g-ft">
+    <div class="g-in">
+      <div class="m-ft">
+        <p><a href="mailto:21214646@qq.com?subject=hebau assess">意见反馈</a></p>
+        <p>Copyright © 2014-2015 Hebau. All Rights Reserved. </p> </div> </div>
+  </div>
+</body>
 </html>

@@ -6,11 +6,22 @@ var Seq = orm.Seq();
  */
 
 exports.index = function(req, res){
-  res.render('index', { title: 'Express' });
+  if(req.isAuthenticated()){
+    res.redirect('/projects');
+  }else{
+    res.render('index', { title: 'Express', message: req.flash('error') });
+  }
 };
 
-exports.login = function(req, res){
-  res.render('index', { title: 'Express' });
+exports.projects = function(req, res){
+  var account = req.user;
+  account.getDepartment()
+  .success(function(dep){
+    res.render('projects', { title: '河北农大考评系统', account: account, department: dep});
+  })
+  .error(function(errors){
+    res.send(errors);
+  });
 };
 
 exports.setup = function(req, res){

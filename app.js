@@ -18,7 +18,9 @@ var adminAccount = require('./routes/admin/account');
 
 var http = require('http');
 var path = require('path');
+var flash = require('connect-flash');
 var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
 var moment = require('moment');
 //var orm = require('orm');
 //var paging = require('orm-paging');
@@ -63,17 +65,19 @@ app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.cookieParser('462267f305f61b7572b5'));
 app.use(express.cookieSession({ key:'hebau_assess_sess', secret: '9a63f01779e0f8c98dad24800984157e462267f305f61b7572b5' }));
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(flash());
 app.use(express.methodOverride());
 app.use(function (req, res, next) {
   res.socketSrv = socketSrv;
   //console.log('Setup socket.io');
   next();
 });
-app.use(app.router);
-app.use(require('less-middleware')({ src: __dirname + '/public' }));
+//app.use(require('less-middleware')({ src: __dirname + '/public' }));
 app.use(express.static(path.join(__dirname, 'public')));
+//初始化passport必须在static之后，router之前。
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(app.router);
 // development only
 app.configure('development', function(){
   app.use(express.errorHandler());
@@ -85,6 +89,60 @@ app.configure('production', function(){
 });
 app.locals.inspect = require('util').inspect;
 
+passport.use(new LocalStrategy(
+  {passReqToCallback: true},
+  function(req, username, password, done) {
+    var Account = orm.model('account');
+    Account.find({
+      where: { name: username, invalid: false }
+    }).success(function(account){
+      if (!account) {
+        return done(null, false, { message: '帐户名错误！' });
+      }
+      return done(null, account);
+    }).error(function(errors){
+      console.log(errors);
+      return done(errors);
+    });
+  }
+));
+passport.serializeUser(function(user, done) {
+  var model = user.getModel();
+  done(null, {model: model.name, id: user.id});
+});
+
+passport.deserializeUser(function(obj, done) {
+  console.log('call');
+  var model = orm.model(obj.model);
+  if(!model){
+    return done(null, null);
+  };
+  model.find(obj.id)
+  .success(function(user){
+    return done(null, user);
+  })
+  .error(function(errors){
+    return done(errors, null);
+  });
+});
+
+passport.accountAuth = function(req, res, next){
+  if(req.isAuthenticated()){
+    return next();
+  }else{
+    res.redirect('/');
+  }
+}
+passport.adminAuth = function(req, res, next){
+  console.log('TODO: Admin Auth');
+  if(true || req.isAuthenticated()){
+    return next();
+  }else{
+    res.redirect('/login/admin');
+  }
+}
+
+app.all('/admin/*', passport.adminAuth);
 app.get('/admin/setup', routes.setup);
 app.get('/admin/login', admin.login);
 app.get('/admin/dashboard', admin.index);
@@ -101,6 +159,12 @@ var rules = app.resource('rules', adminRule);
 projects.add(rules);
 app.post('/admin/user/reset/password', adminUser.resetPassword);
 app.get('/users', user.list);
+app.post('/login', passport.authenticate('local', {
+  successRedirect: '/projects',
+  failureRedirect: '/',
+  failureFlash: true
+}));
+app.get('/projects', passport.accountAuth, routes.projects);
 app.get('/', routes.index);
 
 var server = http.createServer(app);

@@ -16,7 +16,7 @@ exports.index = function(req, res){
   switch (req.format) {
       case 'json':
         var opts = Member.pages(req.query.page, req.query.perpage);
-        opts.order = 'id DESC';
+        opts.order = 'position_id ASC';
         opts.include = [{ model: Department, as: 'department' }]
         Member.search(req.query.q || {}, opts).success(function(members){
           res.json({ total: members.count, members: members.rows });

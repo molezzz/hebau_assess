@@ -1,3 +1,43 @@
 <% layout('layout') -%>
-<h1><%= title %></h1>
-<p>Welcome to <%= title %></p>
+<div class="g-mn" ng-controller="loginCtrl">
+
+  <div class="m-layer m-layer-show">
+      <!-- div class="lymask"></div -->
+      <table class="lytable"><tbody><tr><td class="lytd">
+      <form name="login" action="/login" method="post">
+      <div class="lywrap">
+        <div class="lytt"><h2 class="u-tt">请登录</h2><span class="lyclose">×</span></div>
+        <div class="lyct">
+          <div class="m-form">
+              <fieldset>
+                <div class="formitm">
+                  <label class="lab">输入账号：</label>
+                  <div class="ipt">
+                      <input type="text" name="username" class="u-ipt"/>
+                      <input type="hidden" name="password" value="hebau" >
+                      <p style="color: #C00"><%= message %></p>
+                  </div>
+                </div>
+              </fieldset>
+          </div>
+        </div>
+        <div class="lybt">
+            <div class="lyother">
+                <p>账号全部是小写字母，请注意区分0和o</p>
+            </div>
+            <div class="lybtns">
+                <button type="submit" class="u-btn">确定</button>
+                <button type="reset" class="u-btn u-btn-c4">取消</button>
+            </div>
+        </div>
+      </div></form></td></tr></tbody></table>
+  </div>
+
+</div>
+<script type="text/javascript">
+var app = angular.module('heba.login', [], angular.noop);
+app.controller('loginCtrl', ['$scope', '$http', function($scope, $http){
+
+}]);
+angular.bootstrap(document.documentElement, ['heba.login']);
+</script>

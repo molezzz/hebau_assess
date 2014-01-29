@@ -1,0 +1,20 @@
+<% layout('layout') -%>
+<style>
+.g-sd { width: 160px; padding:36px 16px 40px 40px; overflow: visible;}
+body .g-mn {
+  left: 216px;
+  background: #FFF;
+  border-left: 1px solid #e7e7e7;
+}
+</style>
+<div class="g-mn">
+
+</div>
+<div class="g-sd">
+  <div id="menu" class="m-menu f-usn">
+    <ul id="menulist" class="f-cb">
+      <li><a href="#"><%= department.name %></a></li>
+      <li class="crt"><a href="#">账号：<%= account.name %></a></li>
+      <li><a href="/logout">[ 退出 ]</a></li>
+  </ul> </div>
+</div>

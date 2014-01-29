@@ -35,7 +35,9 @@ module.exports = {
 
     },
     instanceMethods: {
-
+      getModel: function(){
+        return orm.model('account');
+      }
     }
   }
 };
