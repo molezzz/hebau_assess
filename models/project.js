@@ -70,7 +70,7 @@ module.exports = {
     end_at: {
       type: Seq.DATE, allowNull: false,
       comment:'结束时间',
-      validate: {
+      validate: {        
         isDate: true,
         isEven: function(v, next){
           var begin_at = this.begin_at;
@@ -78,7 +78,7 @@ module.exports = {
             return next('结束日期必须在开始日期之后！');
           };
           next();
-        }
+        }        
       }
     }
   },

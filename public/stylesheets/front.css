@@ -342,3 +342,18 @@ html{_height:auto;_padding:100px 0 50px;}
   color: #448aca;
   background-position: 0 -194px;
 }
+.project {
+  line-height: 2em;
+  border-bottom: 1px solid #EEE;
+}
+.project p {
+  margin-top: 0.5em;
+  color: #999;
+}
+
+.m-table .name {
+  font-size: 16px;
+}
+.m-table .description {
+  color: #999;
+}

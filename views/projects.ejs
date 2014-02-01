@@ -7,8 +7,48 @@ body .g-mn {
   border-left: 1px solid #e7e7e7;
 }
 </style>
-<div class="g-mn">
-
+<div class="g-mn" ng-controller="prjCtrl">
+  <div style="margin:2em 3em;" ng-show="project">
+    <div class="project">
+      <h2 class="u-tt u-tt-xl">{{project.name}}</h2>
+      <p>{{project.description}}</p>
+    </div>
+    
+    <table class="m-table" style="margin-top: 1em;">
+      <thead>
+        <tr>
+          <th class="cola">考评对象：</th>
+          <th colspan="2">            
+            <span class="name">{{item.name}}</span>
+            <span class="description">{{item.description}}</span>
+          </th>
+          <th>类型：{{pTypes[project.type]}}</th>          
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="rule in project.rules">
+          <td>{{rule.name}}</td>
+          <td colspan="3">
+            <table class="m-table">
+              <tr ng-repeat="child in rule.children" ng-class-even="'even'">
+                <td class="cola">{{child.name}}</td>
+                <td class="colb">
+                  <label ng-repeat=" (key, i) in child.items">
+                    <input type="radio" ng-model="item.points[child.id]" ng-value="key"/>
+                    {{key}}
+                  </label>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 1em; text-align: right;">
+      <button type="button" class="u-btn u-btn-c2" ng-click="skip()">不了解</button>
+      <button type="button" class="u-btn" ng-click="okNext()">提交</button>
+    </div>
+  </div>  
 </div>
 <div class="g-sd">
   <div id="menu" class="m-menu f-usn">
@@ -18,3 +58,99 @@ body .g-mn {
       <li><a href="/logout">[ 退出 ]</a></li>
   </ul> </div>
 </div>
+<script type="text/javascript">
+var app = angular.module('heba.projects', [], angular.noop);
+app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
+  var pid = -1;
+  var tid = -1;
+  $scope.departments = <%- JSON.stringify(departments)%>;
+  $scope.members = <%- JSON.stringify(members) %>;
+  $scope.projects = <%- JSON.stringify(projects) %>;
+  $scope.account = <%- JSON.stringify(account) %>;
+  $scope.project = null;
+  //待考评对象组
+  $scope.items = [];
+  //当前考评对象
+  $scope.item = null;
+  $scope.pCates = <%- JSON.stringify(pCates) %>;
+  $scope.pTypes = <%- JSON.stringify(pTypes) %>;
+
+  //跳过，下一个
+  $scope.skip = function(){
+    if(confirm('确实要投弃权票吗？')){
+      $scope.item.points = false;
+      $scope.okNext();
+    };
+  };
+
+  //打分完毕
+  $scope.okNext = function(){
+    $scope.next();
+  };
+
+  $scope.next = function(){
+    if(tid + 1 < $scope.items.length){
+      $scope.item = $scope.items[++tid];
+      $scope.item.points = {};
+    } else {
+      $scope.nextProject();
+    }
+  };
+
+  $scope.nextProject = function(){
+    if(pid + 1 < $scope.projects.length){
+      $scope.project = $scope.projects[++pid];
+      tid = -1;
+      if($scope.project.category == 'PA'){
+        //互评
+        if($scope.project.type == 'PERSON'){
+          //人员考核
+          $scope.items = [];
+          angular.forEach($scope.members, function(members, key){
+            if(key != $scope.account.department_id) {
+              $scope.items.concat(members);
+            };
+          });
+        } else {
+          //班子考核
+          $scope.items = [];
+          angular.forEach($scope.departments, function(dep, key){
+            if(dep.id != $scope.account.department_id) {
+              $scope.items.push(dep);
+            };
+          });
+        }
+      }else{
+        //自评
+        if($scope.project.type == 'PERSON'){
+          //人员考核
+          $scope.items = [];
+          angular.forEach($scope.members[$scope.account.department_id], function(member, key){
+            $scope.items.push(member);            
+          });
+        } else {
+          //班子考核
+          $scope.items = [$scope.departments[$scope.account.department_id]];
+        }
+      }
+      $scope.next();
+    } else {
+      $scope.project = null;
+      $scope.item = null;
+      alert('考评项目已经全部完成，请退出！');
+    }
+    
+  };
+  $scope.$watch('items', function(to, from){
+    console.log(to);
+  });
+  $scope.$watch('project', function(to, from){
+    console.log(to);
+  });
+  $scope.$watch('item', function(to, from){
+    console.log(to);
+  }, true);
+  $scope.nextProject();
+}]);
+angular.bootstrap(document.documentElement, ['heba.projects']);
+</script>

@@ -15,9 +15,45 @@ exports.index = function(req, res){
 
 exports.projects = function(req, res){
   var account = req.user;
-  account.getDepartment()
-  .success(function(dep){
-    res.render('projects', { title: '河北农大考评系统', account: account, department: dep});
+  var Department = orm.model('department');
+  var Member = orm.model('member');
+  var Project = orm.model('project');
+  var Rule = orm.model('rule');
+  var chainer = new Seq.Utils.QueryChainer();
+  var data = { 
+    title: '河北农大考评系统',
+    pCates: Project.cates(),
+    pTypes: Project.types()
+  };
+  var now = new Date();
+
+  chainer.add(Department.findAll({attributes: ['id','name']}))
+  .add(Member.findAll({
+    attributes: ['id','department_id','name','description','position_id']
+  }))
+  .add(Project.findAll({
+    where: { begin_at : {lt: now}, end_at: {gt: now} },
+    include: [{
+      model: Rule, as: 'rules',where: {parent_id: 0},
+      include: [{model: Rule, as: 'children'}]
+    }]
+  }))
+  .run()  
+  .success(function(results){
+    data.account = account;
+    data.department = null;    
+    data.departments = {};
+    data.members = {};
+    data.projects = results[2];
+    ex.forEach(results[0],function(dep){
+      data.departments[dep.id] = dep;          
+    });
+    ex.forEach(results[1],function(member){
+      if(!data.members[member.department_id]) data.members[member.department_id] = [];
+      data.members[member.department_id].push(member);      
+    });
+    data.department = data.departments[account.department_id];    
+    res.render('projects', data);
   })
   .error(function(errors){
     res.send(errors);
