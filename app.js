@@ -165,6 +165,7 @@ app.post('/login', passport.authenticate('local', {
   failureFlash: true
 }));
 app.get('/projects', passport.accountAuth, routes.projects);
+app.post('/projects/records', passport.accountAuth, routes.saveRecord);
 app.get('/', routes.index);
 
 var server = http.createServer(app);

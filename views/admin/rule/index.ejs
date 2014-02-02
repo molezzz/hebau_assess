@@ -230,6 +230,7 @@ app.controller('RulesCtrl', ['$scope', '$modal', '$http', function($scope, $moda
     $http(opts).success(function(json, status, headers, config){
       if(json && json.success){
         angular.extend(rule, json.rule);
+        if(!rule.children) rule.children = [];
         rule.edit = false;
         rule._isNew = false;
       }else{

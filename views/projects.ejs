@@ -2,13 +2,26 @@
 <style>
 .g-sd { width: 160px; padding:36px 16px 40px 40px; overflow: visible;}
 body .g-mn {
+  width: 100%;  
   left: 216px;
   background: #FFF;
   border-left: 1px solid #e7e7e7;
+  overflow: hidden;
 }
 </style>
+
+<script type="text/javascript">
+$(window).resize(function(){
+  var h = $(window).height() - 180;  
+  $('#_rightSide').css('height', h);
+});
+$(function(){
+  $(window).resize();
+});
+</script>
+
 <div class="g-mn" ng-controller="prjCtrl">
-  <div style="margin:2em 3em;" ng-show="project">
+  <div id="_rightSide" style="margin:2em 216px 0 30px;height:90%;_margin-right: 236px;padding-right:10px; overflow-y: auto; overflow-x: hidden;" ng-show="project">
     <div class="project">
       <h2 class="u-tt u-tt-xl">{{project.name}}</h2>
       <p>{{project.description}}</p>
@@ -27,7 +40,7 @@ body .g-mn {
       </thead>
       <tbody>
         <tr ng-repeat="rule in project.rules">
-          <td>{{rule.name}}</td>
+          <td class="rule-group">{{rule.name}}</td>
           <td colspan="3">
             <table class="m-table">
               <tr ng-repeat="child in rule.children" ng-class-even="'even'">
@@ -85,7 +98,27 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
 
   //打分完毕
   $scope.okNext = function(){
-    $scope.next();
+    var record = {
+      account_id: $scope.account.id,
+      project_id: $scope.project.id,
+      member_id: $scope.project.type == 'PERSON' ? $scope.item.id : 0,
+      department_id: $scope.project.type == 'DEPARTMENT' ? $scope.item.id : 0,
+      answer: $scope.item.points
+    };
+
+    $.jGrowl("正在保存，请稍候...", { life: 1000 });
+    $http.post('/projects/records', {record : record})
+    .success(function(json, status, headers, config){
+      if(json && json.success){
+        $.jGrowl("保存成功，请继续", { life: 2000 });
+        $scope.next();
+        $('#_rightSide').animate({ scrollTop: 0 }, 'fast');
+      }else{
+        hbex.showErr(json.errors, json.msg);
+      }
+    }).error(function(data, status, headers, config){
+      alert(data);
+    });
   };
 
   $scope.next = function(){

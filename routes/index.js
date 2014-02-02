@@ -60,6 +60,24 @@ exports.projects = function(req, res){
   });
 };
 
+exports.saveRecord = function(req, res){
+  var Record = orm.model('record');
+  var record = req.body['record'];
+  var result = {success: false, msg: ''};
+  
+  Record.create(record).success(function(rule){
+    result.success = true;
+    result.msg = '结果保存成功！';
+    result.rule = rule;
+    res.json(result);
+  }).error(function(errors){
+    result.msg = '结果保存失败';
+    result.errors = errors;
+    console.log(errors);
+    res.json(result);
+  });
+};
+
 exports.setup = function(req, res){
   var chainer = new Seq.Utils.QueryChainer();
   ex(orm.models()).forEach(function(model, k){
