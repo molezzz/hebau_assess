@@ -19,6 +19,7 @@ exports.projects = function(req, res){
   var Member = orm.model('member');
   var Project = orm.model('project');
   var Rule = orm.model('rule');
+  var Record = orm.model('record');
   var chainer = new Seq.Utils.QueryChainer();
   var data = { 
     title: '河北农大考评系统',
@@ -37,14 +38,16 @@ exports.projects = function(req, res){
       model: Rule, as: 'rules',where: {parent_id: 0},
       include: [{model: Rule, as: 'children'}]
     }]
-  }))
+  }))  
   .run()  
   .success(function(results){
+    var pids = [];
     data.account = account;
     data.department = null;    
     data.departments = {};
     data.members = {};
     data.projects = results[2];
+    data.recordExists = {};
     ex.forEach(results[0],function(dep){
       data.departments[dep.id] = dep;          
     });
@@ -52,8 +55,26 @@ exports.projects = function(req, res){
       if(!data.members[member.department_id]) data.members[member.department_id] = [];
       data.members[member.department_id].push(member);      
     });
-    data.department = data.departments[account.department_id];    
-    res.render('projects', data);
+    data.department = data.departments[account.department_id];
+    ex.forEach(data.projects, function(p){
+      pids.push(p.id);
+    });
+    Record.findAll({
+      where: { account_id: account.id, project_id: pids },
+      attributes: ['id', 'project_id', 'department_id', 'member_id']
+    }).success(function(records){      
+      ex.forEach(records, function(r){
+        var id = r.member_id > 0 ? r.member_id : r.department_id;
+        if(!data.recordExists[r.project_id]) data.recordExists[r.project_id] = {};
+        data.recordExists[r.project_id][id] = 1;
+      });
+      res.render('projects', data);
+    }).error(function(errors){
+      console.log(errors);
+      data.errors = errors;
+      res.render('projects', data);
+    });   
+    
   })
   .error(function(errors){
     res.send(errors);
@@ -64,6 +85,8 @@ exports.saveRecord = function(req, res){
   var Record = orm.model('record');
   var record = req.body['record'];
   var result = {success: false, msg: ''};
+  var account = req.user;
+  record.account_id = account.id;
   
   Record.create(record).success(function(rule){
     result.success = true;

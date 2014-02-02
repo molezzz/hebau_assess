@@ -26,7 +26,7 @@ $(function(){
       <h2 class="u-tt u-tt-xl">{{project.name}}</h2>
       <p>{{project.description}}</p>
     </div>
-    
+    <form novalidate name="ruleForm">
     <table class="m-table" style="margin-top: 1em;">
       <thead>
         <tr>
@@ -38,7 +38,7 @@ $(function(){
           <th>类型：{{pTypes[project.type]}}</th>          
         </tr>
       </thead>
-      <tbody>
+      <tbody>        
         <tr ng-repeat="rule in project.rules">
           <td class="rule-group">{{rule.name}}</td>
           <td colspan="3">
@@ -47,16 +47,16 @@ $(function(){
                 <td class="cola">{{child.name}}</td>
                 <td class="colb">
                   <label ng-repeat=" (key, i) in child.items">
-                    <input type="radio" ng-model="item.points[child.id]" ng-value="key"/>
+                    <input type="radio" ng-required="true" ng-model="item.points[child.id]" ng-value="key"/>
                     {{key}}
                   </label>
                 </td>
               </tr>
             </table>
           </td>
-        </tr>
+        </tr>        
       </tbody>
-    </table>
+    </form></table>
     <div style="margin-top: 1em; text-align: right;">
       <button type="button" class="u-btn u-btn-c2" ng-click="skip()">不了解</button>
       <button type="button" class="u-btn" ng-click="okNext()">提交</button>
@@ -87,17 +87,23 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
   $scope.item = null;
   $scope.pCates = <%- JSON.stringify(pCates) %>;
   $scope.pTypes = <%- JSON.stringify(pTypes) %>;
+  $scope.recordExists = <%- JSON.stringify(recordExists) %>;
 
   //跳过，下一个
   $scope.skip = function(){
     if(confirm('确实要投弃权票吗？')){
       $scope.item.points = false;
-      $scope.okNext();
+      $scope.okNext(true);
     };
   };
 
   //打分完毕
-  $scope.okNext = function(){
+  $scope.okNext = function(skipValid){
+    console.log([$scope.ruleForm, $scope.ruleForm.$invalid]);
+    if(!skipValid && $scope.ruleForm.$invalid){
+      alert('您还有选项未选择，请选择！');
+      return;
+    };
     var record = {
       account_id: $scope.account.id,
       project_id: $scope.project.id,
@@ -122,9 +128,13 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
   };
 
   $scope.next = function(){
-    if(tid + 1 < $scope.items.length){
+    if(tid + 1 < $scope.items.length){      
       $scope.item = $scope.items[++tid];
       $scope.item.points = {};
+      if($scope.recordExists[$scope.project.id] && $scope.recordExists[$scope.project.id][$scope.item.id]){
+        //console.log([$scope.project.id, $scope.item.id]);
+        return $scope.next();
+      };
     } else {
       $scope.nextProject();
     }
@@ -174,15 +184,15 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
     }
     
   };
-  $scope.$watch('items', function(to, from){
-    console.log(to);
-  });
-  $scope.$watch('project', function(to, from){
-    console.log(to);
-  });
-  $scope.$watch('item', function(to, from){
-    console.log(to);
-  }, true);
+  // $scope.$watch('items', function(to, from){
+  //   console.log(to);
+  // });
+  // $scope.$watch('project', function(to, from){
+  //   console.log(to);
+  // });
+  // $scope.$watch('item', function(to, from){
+  //   console.log(to);
+  // }, true);
   $scope.nextProject();
 }]);
 angular.bootstrap(document.documentElement, ['heba.projects']);

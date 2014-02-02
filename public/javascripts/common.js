@@ -1,3 +1,10 @@
+if(!window.console){
+  window.console = {
+    log: function(){
+      return;
+    }
+  };
+};
 (function(ng){
   window.hbex = window.hbex || {};
   var ex = {

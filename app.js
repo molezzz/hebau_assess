@@ -164,6 +164,10 @@ app.post('/login', passport.authenticate('local', {
   failureRedirect: '/',
   failureFlash: true
 }));
+app.get('/logout', function(req, res){
+  req.logout();
+  res.redirect('/');
+});
 app.get('/projects', passport.accountAuth, routes.projects);
 app.post('/projects/records', passport.accountAuth, routes.saveRecord);
 app.get('/', routes.index);
