@@ -121,6 +121,10 @@ module.exports = {
       },
       getCateName: function(){
         return cates[this.category];
+      },
+      //生成项目报表
+      genReports: function(){
+
       }
     }
   }

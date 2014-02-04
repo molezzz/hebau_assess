@@ -15,6 +15,7 @@ var adminMember = require('./routes/admin/member');
 var adminProject = require('./routes/admin/project');
 var adminRule = require('./routes/admin/rule');
 var adminAccount = require('./routes/admin/account');
+var adminReport = require('./routes/admin/report');
 
 var http = require('http');
 var path = require('path');
@@ -64,7 +65,11 @@ app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.cookieParser('462267f305f61b7572b5'));
-app.use(express.cookieSession({ key:'hebau_assess_sess', secret: '9a63f01779e0f8c98dad24800984157e462267f305f61b7572b5' }));
+app.use(express.cookieSession({ 
+  key:'hebau_assess_sess',
+   secret: '9a63f01779e0f8c98dad24800984157e462267f305f61b7572b5',
+   cookie: { maxAge : 3600000 * 8 } //8小时过期
+}));
 app.use(flash());
 app.use(express.methodOverride());
 app.use(function (req, res, next) {
@@ -93,13 +98,25 @@ passport.use(new LocalStrategy(
   {passReqToCallback: true},
   function(req, username, password, done) {
     var Account = orm.model('account');
+    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
     Account.find({
       where: { name: username, invalid: false }
     }).success(function(account){
       if (!account) {
         return done(null, false, { message: '帐户名错误！' });
       }
-      return done(null, account);
+      account.updateAttributes({
+        last_login_at: new Date(),
+        last_login_ip: ip
+      })
+      .success(function(){
+        return done(null, account);
+      })
+      .error(function(errors){
+        console.log(errors);
+        return done(null, account);
+      });      
     }).error(function(errors){
       console.log(errors);
       return done(errors);
@@ -154,9 +171,11 @@ app.resource('admin/accounts', adminAccount);
 app.get('/admin/accounts/wizard/deps', adminAccount.wizardDeps);
 app.post('/admin/accounts/wizard/run', adminAccount.wizardRun);
 app.put('/admin/accounts/disable/all', adminAccount.disableAll);
+app.post('/admin/project/:project/record/update/total', adminProject.updateRecordTotal);
 var projects = app.resource('admin/projects', adminProject);
 var rules = app.resource('rules', adminRule);
 projects.add(rules);
+app.get('/admin/reports', adminReport.index);
 app.post('/admin/user/reset/password', adminUser.resetPassword);
 app.get('/users', user.list);
 app.post('/login', passport.authenticate('local', {

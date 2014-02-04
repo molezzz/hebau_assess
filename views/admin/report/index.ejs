@@ -56,10 +56,6 @@
     </div>
 
     <div class="row" style="padding:0 10px;">
-      <div class="alert alert-warning">
-        <p><strong>注意!</strong> 正在更新分数，请勿做其他操作，也不要关闭浏览器</p>
-        <p></p>
-      </div>
       <div class="panel">
         <table class="table table-striped table-hover table-condensed">
           <thead>
@@ -92,23 +88,6 @@
               <td>
                 <div class="pull-right">
                   <div class="btn-group">
-                    <a href="#" dropdown-toggle class="btn btn-default btn-sm dropdown" title="更新分数">
-                      <i class="glyphicon glyphicon-cloud-upload"></i>
-                    </a>
-                    <ul class="dropdown-menu" style="min-width: 4em;">
-                      <li>
-                        <a href="#update" ng-click="updateRTotal(prj)">追加更新</a>
-                      </li>
-                      <li>
-                        <a href="#updateAll" ng-click="updateRTotal(prj,true)">全部更新</a>
-                      </li>
-                    </ul>
-                    <a href="#edit" class="btn btn-default btn-sm" title="生成报表" ng-click="editPrj(prj)">
-                      <i class="glyphicon glyphicon-briefcase"></i>
-                    </a>
-                  </div>
-
-                  <div class="btn-group">
                     <a href="/admin/projects/{{prj.id}}/rules" class="btn btn-default btn-sm" title="添加或修改规则">
                       <i class="glyphicon glyphicon-list-alt"></i>
                     </a>
@@ -118,7 +97,7 @@
                   </div>
 
                   <div class="btn-group">
-                    <a href="#delete" class="btn btn-danger btn-sm" title="删除项目" ng-click="delPrj(prj)">
+                    <a href="#delete" class="btn btn-danger btn-sm" title="删除员工" ng-click="delPrj(prj)">
                       <i class="glyphicon glyphicon-trash"></i>
                     </a>
                   </div>
@@ -420,16 +399,7 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
   $scope.numPages = function(){
     return Math.max(Math.ceil($scope.prjsTotal / $scope.perpage), 1);
   };
-  $scope.updateRTotal = function(project, all){
-    $http.post('/admin/project/'+ project.id +'/record/update/total' + (all ? '?update_all=1' : '')).success(function(json, status, headers, config){
-      console.log(json);
-    })
-    .error(function(data, status, headers, config) {
-      alert(data);
-      console.log(data);
-    });
 
-  };
   $scope.$watch('filter.category', function(to, from){
     $scope.loadData();
   });
