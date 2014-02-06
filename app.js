@@ -195,7 +195,7 @@ var server = http.createServer(app);
 socketSrv.io = socketIo.listen(server);
 socketSrv.io.sockets.on('connection', function (socket) {
   socketSrv.clients[socket.id] = socket;
-  socket.emit('account_server_ok', { status: 'OK', msg: '服务器准备就绪... OK', cid: socket.id});
+  socket.emit('server_ok', { status: 'OK', msg: '服务器准备就绪... OK', cid: socket.id});
   socket.on('account_ready', function(data){
     console.log(data);
   });

@@ -121,7 +121,7 @@ exports.updateRecordTotal = function(req, res){
   var Record = orm.model('record');
   var pid = req.params.project;
   var updateAll = req.query.update_all ? true : false;
-  var result = {success: false, msg: ''};  
+  var _result = {success: false, msg: ''};  
 
   chainer.add(Rule.findAll({
     where: { project_id: pid, parent_id: 0 },
@@ -135,7 +135,11 @@ exports.updateRecordTotal = function(req, res){
   .success(function(result){
     var rules = {};
     var records = result[1];
-    var updateChainer = new (orm.Seq().Utils.QueryChainer)();   
+    var updateChainer = new (orm.Seq().Utils.QueryChainer)();
+    var finished = 0;
+    var io = res.socketSrv;
+    var cid = req.body['cid'];
+    io.clients[cid].emit('record_status',{total: records.length, current: finished});   
     
     ex.forEach(result[0], function(pRule){
       //计算分值占比
@@ -151,33 +155,36 @@ exports.updateRecordTotal = function(req, res){
       var t = 0;
       var ans = record.answer;      
       for(key in ans){
-        console.log([ans[key], rules[key], rules[key][ans[key]] ]);
+        //console.log([ans[key], rules[key], rules[key][ans[key]] ]);
         t = t + (rules[key] ? rules[key][ans[key]] : 0); 
       };      
       //record.total = t;
       updateChainer.add(record, 'updateAttributes', [{ total: t }, ['total']], {
         after: function(record) {
+          if((++finished % 200) == 0 || finished == records.length){            
+            io.clients[cid].emit('record_status',{total: records.length, current: finished});
+          };
           console.log(record.id);
         }
       });
     });
     updateChainer.runSerially({ skipOnError: true })
     .success(function(){
-      result.msg = '更新完成！';      
-      result.success = true;
-      res.json(result);
+      _result.msg = '更新完成！';      
+      _result.success = true;
+      res.json(_result);
     })
     .error(function(errors){
-      result.msg = '数据库错误！';
+      _result.msg = '数据库错误！';
       console.log(errors);
-      result.errors = errors;
-      res.json(result);
+      _result.errors = errors;
+      res.json(_result);
     });
   })
   .error(function(errors){
-    result.msg = '数据库错误！';
+    _result.msg = '数据库错误！';
     console.log(errors);
-    result.errors = errors;
-    res.json(result);
+    _result.errors = errors;
+    res.json(_result);
   });
 }

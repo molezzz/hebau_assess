@@ -1,6 +1,11 @@
 <% layout('../layout') -%>
+<% stylesheet('/stylesheets/messenger.css') -%>
+<% stylesheet('/stylesheets/messenger-theme-flat.css') -%>
 <% script('/javascripts/angular/ui-bootstrap.js') -%>
 <% script('/javascripts/moment-with-langs.js') -%>
+<% script('/javascripts/socket.io.min.js') -%>
+<% script('/javascripts/messenger.min.js') -%>
+<% script('/javascripts/messenger-theme-flat.js') -%>
 
 <div class="row" ng-controller="PrjsCtrl" style="height:100%;">
   <div class="col-md-12 loading-wrap">
@@ -56,9 +61,11 @@
     </div>
 
     <div class="row" style="padding:0 10px;">
-      <div class="alert alert-warning">
+      <div class="alert alert-warning"  ng-show="onUpdateTotal">
         <p><strong>注意!</strong> 正在更新分数，请勿做其他操作，也不要关闭浏览器</p>
-        <p></p>
+        <p style="margin-top: 1em;">
+          <progressbar class="progress-striped active" max="100" value="records.percent" type="warning"><i>{{records.current}} / {{records.total}}</i></progressbar>
+        </p>
       </div>
       <div class="panel">
         <table class="table table-striped table-hover table-condensed">
@@ -262,6 +269,10 @@
 </script>
 <script type="text/javascript">
 (function($){
+Messenger.options = {
+    extraClasses: 'messenger-fixed messenger-on-bottom messenger-on-right',
+    theme: 'flat'
+};
 var cates = <%- JSON.stringify(cates) %>;
 var types = <%- JSON.stringify(types) %>;
 var app = angular.module('heba.admin.prjs', ['ui.bootstrap'], angular.noop);
@@ -302,7 +313,7 @@ app.filter('status', function(){
     return '<span class="label label-'+label+'">'+ name +'</span>'
   }
 });
-app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
+app.controller('PrjsCtrl', ['$scope', '$modal', '$http', '$timeout', function($scope, $modal, $http, $timeout){
   var opts = {
     backdrop: true,
     keyboard: true,
@@ -320,6 +331,28 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
   $scope.cates = cates;
   $scope.types = types;
   $scope.perpage = 20;
+  $scope.onUpdateTotal = false;
+  $scope.records = {
+    percent: 0,
+    total: 0,
+    current: 0
+  };  
+  var socketId = null;
+  var parser = document.createElement('a');
+  parser.href = window.location;
+  var socket = io.connect(parser.protocol + '//' + parser.host);
+  socket.on('server_ok', function (data) {
+    console.log(data);
+    socketId = data.cid;
+    Messenger().post({message: data.msg, hideAfter: 5});
+  });
+  socket.on('record_status', function(data){
+    console.log(data);
+    $scope.records.percent = data.total == 0 ? 100 : Math.ceil((data.current / data.total) * 100);
+    $scope.records.total = data.total;
+    $scope.records.current = data.current;
+    $scope.$digest();
+  });
 
   $scope.delAll = function(){
     var prjs = [];
@@ -421,12 +454,24 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
     return Math.max(Math.ceil($scope.prjsTotal / $scope.perpage), 1);
   };
   $scope.updateRTotal = function(project, all){
-    $http.post('/admin/project/'+ project.id +'/record/update/total' + (all ? '?update_all=1' : '')).success(function(json, status, headers, config){
+    if(!socketId) { alert('与服务器通信失败，请重新刷新页面!')};
+    $scope.onUpdateTotal = true;
+    $http.post('/admin/project/'+ project.id +'/record/update/total' + (all ? '?update_all=1' : ''), {cid: socketId}).success(function(json, status, headers, config){
       console.log(json);
+      if(json.success){
+        Messenger().post({message: json.msg, hideAfter: 5});
+      } else {
+        hbex.showErr(json.errors, json.msg);
+      };
+      $timeout(function(){
+        $scope.onUpdateTotal = false;
+        $scope.records.percent = 0;       
+      },3000);
     })
     .error(function(data, status, headers, config) {
       alert(data);
       console.log(data);
+      $scope.onUpdateTotal = false; 
     });
 
   };

@@ -478,7 +478,7 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
     parser.href = window.location;
     $modal.open(opts);
     var socket = io.connect(parser.protocol + '//' + parser.host);
-    socket.on('account_server_ok', function (data) {
+    socket.on('server_ok', function (data) {
       wizardSS.msg = data.msg;
       wizardSS.statusChange();
       $http.post('/admin/accounts/wizard/run',{ deps: deps, cid: data.cid})
