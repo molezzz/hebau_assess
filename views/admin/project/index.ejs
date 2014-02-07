@@ -110,7 +110,7 @@
                         <a href="#updateAll" ng-click="updateRTotal(prj,true)">全部更新</a>
                       </li>
                     </ul>
-                    <a href="#edit" class="btn btn-default btn-sm" title="生成报表" ng-click="editPrj(prj)">
+                    <a href="#report" class="btn btn-default btn-sm" title="生成报表" ng-click="genReport(prj)">
                       <i class="glyphicon glyphicon-briefcase"></i>
                     </a>
                   </div>
@@ -336,7 +336,7 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', '$timeout', function($s
     percent: 0,
     total: 0,
     current: 0
-  };  
+  };
   var socketId = null;
   var parser = document.createElement('a');
   parser.href = window.location;
@@ -413,6 +413,25 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', '$timeout', function($s
     $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
   };
 
+  $scope.genReport = function(prj){
+    var msg = Messenger().post({message: '正在生成报告，请稍候...'});
+    $http.post('/admin/project/'+ prj.id +'/update/report')
+    .success(function(json){
+      if(json && json.success){
+        msg.hide();
+        alert('成功更新报告！');
+      }else{
+        msg.hide();
+        hbex.showErr(json.errors, json.msg);
+      };
+    })
+    .error(function(data, status, headers, config){
+      alert(data);
+      msg.hide();
+      console.log(data);
+    });
+  };
+
   $scope.loadData = function(keepPage){
     var query = {};
     $scope.loading = true;
@@ -465,13 +484,13 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', '$timeout', function($s
       };
       $timeout(function(){
         $scope.onUpdateTotal = false;
-        $scope.records.percent = 0;       
+        $scope.records.percent = 0;
       },3000);
     })
     .error(function(data, status, headers, config) {
       alert(data);
       console.log(data);
-      $scope.onUpdateTotal = false; 
+      $scope.onUpdateTotal = false;
     });
 
   };

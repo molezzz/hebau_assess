@@ -121,7 +121,7 @@ exports.updateRecordTotal = function(req, res){
   var Record = orm.model('record');
   var pid = req.params.project;
   var updateAll = req.query.update_all ? true : false;
-  var _result = {success: false, msg: ''};  
+  var _result = {success: false, msg: ''};
 
   chainer.add(Rule.findAll({
     where: { project_id: pid, parent_id: 0 },
@@ -139,8 +139,8 @@ exports.updateRecordTotal = function(req, res){
     var finished = 0;
     var io = res.socketSrv;
     var cid = req.body['cid'];
-    io.clients[cid].emit('record_status',{total: records.length, current: finished});   
-    
+    io.clients[cid].emit('record_status',{total: records.length, current: finished});
+
     ex.forEach(result[0], function(pRule){
       //计算分值占比
       ex.forEach(pRule.children, function(rule){
@@ -149,19 +149,19 @@ exports.updateRecordTotal = function(req, res){
           items[key] = (items[key] * pRule.scale) / 100;
         };
         rules[rule.id] = items;
-      });      
+      });
     });
     ex.forEach(records, function(record, id){
       var t = 0;
-      var ans = record.answer;      
+      var ans = record.answer;
       for(key in ans){
         //console.log([ans[key], rules[key], rules[key][ans[key]] ]);
-        t = t + (rules[key] ? rules[key][ans[key]] : 0); 
-      };      
+        t = t + (rules[key] ? rules[key][ans[key]] : 0);
+      };
       //record.total = t;
-      updateChainer.add(record, 'updateAttributes', [{ total: t }, ['total']], {
+      updateChainer.add(record, 'updateAttributes', [{ total: Math.ceil(t * 100) / 100 }, ['total']], {
         after: function(record) {
-          if((++finished % 200) == 0 || finished == records.length){            
+          if((++finished % 200) == 0 || finished == records.length){
             io.clients[cid].emit('record_status',{total: records.length, current: finished});
           };
           console.log(record.id);
@@ -170,7 +170,7 @@ exports.updateRecordTotal = function(req, res){
     });
     updateChainer.runSerially({ skipOnError: true })
     .success(function(){
-      _result.msg = '更新完成！';      
+      _result.msg = '更新完成！';
       _result.success = true;
       res.json(_result);
     })
@@ -180,6 +180,42 @@ exports.updateRecordTotal = function(req, res){
       _result.errors = errors;
       res.json(_result);
     });
+  })
+  .error(function(errors){
+    _result.msg = '数据库错误！';
+    console.log(errors);
+    _result.errors = errors;
+    res.json(_result);
+  });
+}
+
+//更新报告
+exports.updateReport = function(req, res){
+  var pid = req.params.project;
+  var Project = orm.model('project');
+  var Report = orm.model('report');
+  var _result = {success: false, msg: ''};
+  var chainer = new (orm.Seq().Utils.QueryChainer)();
+  chainer.add(Project.find(pid))
+  .add(Report.destroy({ project_id: pid }))
+  .run()
+  .success(function(result){
+    var project = result[0];
+    if(project){
+      project.genReports(function(){
+        _result.msg = "OK";
+        _result.success = true;
+        res.json(_result);
+      }, function(errors){
+        _result.msg = '生成报告错误！';
+        console.log(errors);
+        _result.errors = errors;
+        res.json(_result);
+      });
+    }else{
+      _result.msg = '指定的项目不存在！';
+      res.json(_result);
+    };
   })
   .error(function(errors){
     _result.msg = '数据库错误！';

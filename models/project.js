@@ -70,7 +70,7 @@ module.exports = {
     end_at: {
       type: Seq.DATE, allowNull: false,
       comment:'结束时间',
-      validate: {        
+      validate: {
         isDate: true,
         isEven: function(v, next){
           var begin_at = this.begin_at;
@@ -78,7 +78,7 @@ module.exports = {
             return next('结束日期必须在开始日期之后！');
           };
           next();
-        }        
+        }
       }
     }
   },
@@ -123,8 +123,68 @@ module.exports = {
         return cates[this.category];
       },
       //生成项目报表
-      genReports: function(){
-
+      genReports: function(successFn, errorFn){
+        //var Department = orm.model('department');
+        //var Member = orm.model('member');
+        var Record = orm.model('record');
+        var Account = orm.model('account');
+        var Report = orm.model('report');
+        var key = this.type == 'PERSON' ? 'member_id' : 'department_id';
+        var chainer = new (orm.Seq().Utils.QueryChainer)();
+        var _self = this;
+        chainer.add(Record.findAll({
+          where: { project_id: _self.id },
+          order: '`' + key + '` DESC , `total` DESC',
+          attributes: ['id', 'member_id', 'department_id', 'account_id', 'project_id', 'total']
+        })).add(Account.count({
+          where: { invalid: false }
+        }));
+        chainer.run()
+        .success(function(result){
+          var records = {};
+          var reports = [];
+          var accountTotal = result[1];
+          ex.forEach(result[0], function(record){
+            if(!records[record[key]]) records[record[key]] = [];
+            //去掉所有弃权的票
+            if(record.total > 0) records[record[key]].push(record);
+          });
+          ex.forEach(records, function(arr, id){
+            var low = Math.max(Math.ceil(_self.low_cut * arr.length / 100), 0) * -1;
+            var high = Math.max(Math.ceil(_self.high_cut * arr.length / 100), 0);
+            var report = {
+              total: 0,
+              project_id: _self.id,
+              account_count: accountTotal,
+              abstentions: accountTotal - arr.length
+            };
+            //去掉高分、去掉低分
+            if(low == 0){
+              arr.slice(high);
+            }else{
+              arr.slice(high, low);
+            };
+            //console.log(low, high, arr);
+            ex.forEach(arr, function(r){
+              report.total += r.total;
+            });
+            report[key] = id;
+            report.valids = arr.length;
+            //console.log(report);
+            reports.push(report);
+          });
+          Report.bulkCreate(reports)
+          .success(function(){
+            if(ex.isFunction(successFn)) return successFn();
+          })
+          .error(function(errors){
+            if(ex.isFunction(errorFn)) return errorFn(errors);
+          });
+        })
+        .error(function(errors){
+          console.log(errors);
+          if(ex.isFunction(errorFn)) return errorFn(errors);
+        });
       }
     }
   }

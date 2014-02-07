@@ -65,7 +65,7 @@ app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.cookieParser('462267f305f61b7572b5'));
-app.use(express.cookieSession({ 
+app.use(express.cookieSession({
   key:'hebau_assess_sess',
    secret: '9a63f01779e0f8c98dad24800984157e462267f305f61b7572b5',
    cookie: { maxAge : 3600000 * 8 } //8小时过期
@@ -116,7 +116,7 @@ passport.use(new LocalStrategy(
       .error(function(errors){
         console.log(errors);
         return done(null, account);
-      });      
+      });
     }).error(function(errors){
       console.log(errors);
       return done(errors);
@@ -172,6 +172,7 @@ app.get('/admin/accounts/wizard/deps', adminAccount.wizardDeps);
 app.post('/admin/accounts/wizard/run', adminAccount.wizardRun);
 app.put('/admin/accounts/disable/all', adminAccount.disableAll);
 app.post('/admin/project/:project/record/update/total', adminProject.updateRecordTotal);
+app.post('/admin/project/:project/update/report', adminProject.updateReport);
 var projects = app.resource('admin/projects', adminProject);
 var rules = app.resource('rules', adminRule);
 projects.add(rules);
