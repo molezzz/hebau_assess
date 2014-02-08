@@ -49,15 +49,26 @@
 
       <!-- Collect the nav links, forms, and other content for toggling -->
       <div class="collapse navbar-collapse navbar-ex8-collapse">
-        <ul class="nav navbar-nav">
-          <li class="<%= typeof dashboardMenuActive == 'undefined' ? '' : 'active'%>"><a href="#">首页</a></li>
+        <ul class="nav navbar-nav navbar-left">
+          <% if(admin){ -%>
+          <% if(admin.is_admin){ -%>
           <li class="<%= typeof userMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/users">用户</a></li>
           <li class="<%= typeof departmentMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/departments">部门</a></li>
           <li class="<%= typeof memberMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/members">人员</a></li>
           <li class="<%= typeof projectMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/projects">考评</a></li>
           <li class="<%= typeof accountMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/accounts">账号</a></li>
+          <% } -%>
           <li class="<%= typeof reportMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/reports">结果</a></li>
+          <% } -%>
         </ul>
+        <div class="navbar-right">
+          <% if(admin){ -%>
+          <a href="/admin/logout" title="退出登录" class="btn btn-warning navbar-btn" style="margin-right: 1em;">
+            <%= admin.name %>
+            <i class="glyphicon glyphicon-log-out"></i>
+          </a>
+          <% } %>
+        </div>
       </div><!-- /.navbar-collapse -->
 
     </div>

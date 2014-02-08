@@ -28,8 +28,8 @@ module.exports = {
   model: {
     id: { type: Seq.INTEGER, autoIncrement: true, primaryKey: true },
     group_id: { type: Seq.INTEGER, allowNull: false, defaultValue: 0 },
-    is_admin: { type: Seq.BOOLEAN, defaultValue: true},
-    name: { type: Seq.STRING, allowNull: false },
+    is_admin: { type: Seq.BOOLEAN, defaultValue: false},
+    name: { type: Seq.STRING, allowNull: false, unique: true },
     email: {
       type: Seq.STRING, allowNull:false, unique: true,
       validate: { notEmpty: true }
@@ -66,18 +66,24 @@ module.exports = {
        * param Function cb(err, user)
        */
       login: function(username, password, cb){
-        this.find(guessName(uesername), 1, function(err, user){
-          if(err || (user && user.checkPassword(password))){
-            cb(true, null);
-          }else{
+        this.find({ where: guessName(username) })
+        .success(function(user){
+          if(user && user.checkPassword(password)){
             cb(false, user);
+          } else {
+            cb(true, null);
           }
+        }).error(function(errors){
+          cb(errors, null);
         });
       }
     },
     instanceMethods: {
       checkPassword: function(password){
         return this.password == encryptPassword(password, this.getSalt());
+      },
+      getModel: function(){
+        return orm.model('user');
       },
       //获取盐值，没有则自动创建
       getSalt: function(){

@@ -97,30 +97,38 @@ app.locals.inspect = require('util').inspect;
 passport.use(new LocalStrategy(
   {passReqToCallback: true},
   function(req, username, password, done) {
+    var admin = password != 'HEBAUACC';
     var Account = orm.model('account');
+    var User = orm.model('user');
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    Account.find({
-      where: { name: username, invalid: false }
-    }).success(function(account){
-      if (!account) {
-        return done(null, false, { message: '帐户名错误！' });
-      }
-      account.updateAttributes({
-        last_login_at: new Date(),
-        last_login_ip: ip
-      })
-      .success(function(){
-        return done(null, account);
-      })
-      .error(function(errors){
-        console.log(errors);
-        return done(null, account);
+    if(admin){
+      User.login(username, password, function(error, user){
+        return error ? done(null, false, { message: '用户名或密码错误！' }) : done(null, user);
       });
-    }).error(function(errors){
-      console.log(errors);
-      return done(errors);
-    });
+    } else {
+      Account.find({
+        where: { name: username, invalid: false }
+      }).success(function(account){
+        if (!account) {
+          return done(null, false, { message: '帐户名错误！' });
+        }
+        account.updateAttributes({
+          last_login_at: new Date(),
+          last_login_ip: ip
+        })
+        .success(function(){
+          return done(null, account);
+        })
+        .error(function(errors){
+          console.log(errors);
+          return done(null, account);
+        });
+      }).error(function(errors){
+        console.log(errors);
+        return done(errors);
+      });
+    };
   }
 ));
 passport.serializeUser(function(user, done) {
@@ -129,7 +137,6 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(obj, done) {
-  console.log('call');
   var model = orm.model(obj.model);
   if(!model){
     return done(null, null);
@@ -144,20 +151,26 @@ passport.deserializeUser(function(obj, done) {
 });
 
 passport.accountAuth = function(req, res, next){
-  if(req.isAuthenticated()){
+  var isAcc = req.isAuthenticated() && req.user.getModel().name == 'account';
+  if(isAcc){
     return next();
   }else{
     res.redirect('/');
   }
-}
+};
+
 passport.adminAuth = function(req, res, next){
-  console.log('TODO: Admin Auth');
-  if(true || req.isAuthenticated()){
+  var isAdmin = req.isAuthenticated() && req.user.getModel().name == 'user';
+  //console.log(admin.getModel());
+  if(req.params[0] == 'login' || isAdmin){
+    res.locals({
+      admin: req.user
+    });
     return next();
   }else{
-    res.redirect('/login/admin');
+    res.redirect('/admin/login');
   }
-}
+};
 
 app.all('/admin/*', passport.adminAuth);
 app.get('/admin/setup', routes.setup);
@@ -179,6 +192,15 @@ projects.add(rules);
 app.get('/admin/reports', adminReport.index);
 app.get('/admin/report', adminReport.show);
 app.post('/admin/user/reset/password', adminUser.resetPassword);
+app.post('/admin/login', passport.authenticate('local', {
+  successRedirect: '/admin/reports',
+  failureRedirect: '/admin/login',
+  failureFlash: true
+}));
+app.get('/admin/logout', function(req, res){
+  req.logout();
+  res.redirect('/admin/login');
+});
 app.get('/users', user.list);
 app.post('/login', passport.authenticate('local', {
   successRedirect: '/projects',

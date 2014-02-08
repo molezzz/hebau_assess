@@ -6,7 +6,8 @@ var Seq = orm.Seq();
  */
 
 exports.index = function(req, res){
-  if(req.isAuthenticated()){
+  var isAcc = req.isAuthenticated() && req.user.getModel().name == 'account';
+  if(isAcc){
     res.redirect('/projects');
   }else{
     res.render('index', { title: 'Express', message: req.flash('error') });
@@ -21,7 +22,7 @@ exports.projects = function(req, res){
   var Rule = orm.model('rule');
   var Record = orm.model('record');
   var chainer = new Seq.Utils.QueryChainer();
-  var data = { 
+  var data = {
     title: '河北农大考评系统',
     pCates: Project.cates(),
     pTypes: Project.types()
@@ -38,22 +39,22 @@ exports.projects = function(req, res){
       model: Rule, as: 'rules',where: {parent_id: 0},
       include: [{model: Rule, as: 'children'}]
     }]
-  }))  
-  .run()  
+  }))
+  .run()
   .success(function(results){
     var pids = [];
     data.account = account;
-    data.department = null;    
+    data.department = null;
     data.departments = {};
     data.members = {};
     data.projects = results[2];
     data.recordExists = {};
     ex.forEach(results[0],function(dep){
-      data.departments[dep.id] = dep;          
+      data.departments[dep.id] = dep;
     });
     ex.forEach(results[1],function(member){
       if(!data.members[member.department_id]) data.members[member.department_id] = [];
-      data.members[member.department_id].push(member);      
+      data.members[member.department_id].push(member);
     });
     data.department = data.departments[account.department_id];
     ex.forEach(data.projects, function(p){
@@ -62,7 +63,7 @@ exports.projects = function(req, res){
     Record.findAll({
       where: { account_id: account.id, project_id: pids },
       attributes: ['id', 'project_id', 'department_id', 'member_id']
-    }).success(function(records){      
+    }).success(function(records){
       ex.forEach(records, function(r){
         var id = r.member_id > 0 ? r.member_id : r.department_id;
         if(!data.recordExists[r.project_id]) data.recordExists[r.project_id] = {};
@@ -73,8 +74,8 @@ exports.projects = function(req, res){
       console.log(errors);
       data.errors = errors;
       res.render('projects', data);
-    });   
-    
+    });
+
   })
   .error(function(errors){
     res.send(errors);
@@ -87,7 +88,7 @@ exports.saveRecord = function(req, res){
   var result = {success: false, msg: ''};
   var account = req.user;
   record.account_id = account.id;
-  
+
   Record.create(record).success(function(rule){
     result.success = true;
     result.msg = '结果保存成功！';
