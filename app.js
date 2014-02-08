@@ -177,6 +177,7 @@ var projects = app.resource('admin/projects', adminProject);
 var rules = app.resource('rules', adminRule);
 projects.add(rules);
 app.get('/admin/reports', adminReport.index);
+app.get('/admin/report', adminReport.show);
 app.post('/admin/user/reset/password', adminUser.resetPassword);
 app.get('/users', user.list);
 app.post('/login', passport.authenticate('local', {

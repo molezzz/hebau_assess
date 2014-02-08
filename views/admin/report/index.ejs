@@ -2,7 +2,7 @@
 <% script('/javascripts/angular/ui-bootstrap.js') -%>
 <% script('/javascripts/moment-with-langs.js') -%>
 
-<div class="row" ng-controller="PrjsCtrl" style="height:100%;">
+<div class="row" ng-controller="RepoCtrl" style="height:100%;">
   <div class="col-md-12 loading-wrap">
     <div class="loading-box" ng-show="loading">
       <div class="progress progress-striped active">
@@ -15,7 +15,7 @@
 
     <div class="row"  style="padding:0 10px;">
       <ul class="nav nav-tabs">
-        <li class="active"><a href="#">考评管理</a></li>
+        <li class="active"><a href="#">考评结果</a></li>
       </ul>
       <div class="navbar navbar-default" role="navigation" style="margin-top:3px;">
         <!-- Brand and toggle get grouped for better mobile display -->
@@ -31,8 +31,7 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse">
           <div class="btn-group navbar-left" >
-            <button type="button" class="btn btn-default navbar-btn btn-sm" ng-click="newPrj()"><span class="glyphicon glyphicon-plus-sign"></span> 添加</button>
-            <button type="button" class="btn btn-danger navbar-btn btn-sm" ng-click="delAll()"><span class="glyphicon glyphicon-trash"></span> 删除</button>
+
           </div>
 
           <div class="btn-group navbar-right">
@@ -56,58 +55,78 @@
     </div>
 
     <div class="row" style="padding:0 10px;">
-      <div class="panel">
-        <table class="table table-striped table-hover table-condensed">
+      <div class="panel col-md-4">
+        <table class="table table-hover table-condensed">
           <thead>
             <tr>
-              <th></th>
               <th>#</th>
               <th>名称</th>
               <th>类别</th>
               <th>类型</th>
-              <th>剪裁</th>
               <th>状态</th>
-              <th>开始时间</th>
-              <th>结束时间</th>
-              <th>创建时间</th>
-              <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="prj in prjs | filter: { name: filter.name}">
-              <td><input type="checkbox" ng-model="prj.checked" ng-checked="prj.checked"/></td>
+            <tr ng-repeat="prj in prjs | filter: { name: filter.name}" ng-class="{ success: project.id == prj.id }" ng-click="showReport(prj)">
               <td>{{ prj.id }}</td>
               <td>{{ prj.name }}</td>
               <td ng-bind-html-unsafe="prj.category | cateName"></td>
               <td ng-bind-html-unsafe="prj.type | typeName"></td>
-              <td>高分：{{prj.high_cut}} % &nbsp;&nbsp; 低分：{{prj.low_cut}} %</td>
               <td  ng-bind-html-unsafe="prj | status"></td>
-              <td>{{ prj.begin_at | date:'yyyy-MM-dd HH:mm' }}</td>
-              <td>{{ prj.end_at | date:'yyyy-MM-dd HH:mm' }}</td>
-              <td>{{ prj.createdAt | date:'yyyy-MM-dd HH:mm' }}</td>
-              <td>
-                <div class="pull-right">
-                  <div class="btn-group">
-                    <a href="/admin/projects/{{prj.id}}/rules" class="btn btn-default btn-sm" title="添加或修改规则">
-                      <i class="glyphicon glyphicon-list-alt"></i>
-                    </a>
-                    <a href="#edit" class="btn btn-default btn-sm" title="编辑" ng-click="editPrj(prj)">
-                      <i class="glyphicon glyphicon-edit"></i>
-                    </a>
-                  </div>
-
-                  <div class="btn-group">
-                    <a href="#delete" class="btn btn-danger btn-sm" title="删除员工" ng-click="delPrj(prj)">
-                      <i class="glyphicon glyphicon-trash"></i>
-                    </a>
-                  </div>
-                </div>
-              </td>
             </tr>
           </tbody>
         </table>
-      </div>
+      </div><!-- col-md-3 -->
 
+      <div class="col-md-8">
+        <nav class="navbar navbar-default" role="navigation">
+          <div class="container-fluid">
+            <div class="navbar-header">
+              <span class="navbar-brand">{{project.name}} 考核结果：</span>
+            </div>
+            <div class="collapse navbar-collapse navbar-right">
+              <div class="btn-group">
+                <button ng-repeat="(key, value) in cateFilters" type="button" class="btn btn-default navbar-btn btn-sm" ng-model="cateFilter.key" btn-radio="'{{key}}'">{{value}}</button>
+              </div>
+
+              <div class="btn-group">
+                <button type="button" ng-show="reports" class="btn btn-default navbar-btn btn-sm" title="导出结果" ng-click="export(project)"><i class="glyphicon glyphicon-share"></i></button>
+              </div>
+
+          </div>
+        </nav>
+
+        <div class="alert alert-warning" style="margin-top: 1em;" ng-show="reportLoading">
+          <strong><i class="fa fa-spinner fa-spin"></i></strong>
+          数据加载中...
+        </div>
+
+        <table class="table table-striped table-hover table-condensed">
+          <thead>
+            <tr>
+              <th>排名</th>
+              <th>名称</th>
+              <th>类别</th>
+              <th>总分</th>
+              <th>平均分</th>
+              <th>参与投票人数</th>
+              <th>有效票数</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="report in reports | filter: { cate: cateFilter.key }">
+              <td>{{$index + 1}}</td>
+              <td>{{report.name}}</td>
+              <td>{{cateFilters[report.cate]}}</td>
+              <td>{{report.total}}</td>
+              <td>{{report.avg}}</td>
+              <td>{{report.account_count}}</td>
+              <td>{{report.valids}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
     </div>
 
   </div><!-- col-md-12 -->
@@ -123,127 +142,15 @@
   </div>
 </div>
 
-<script type="text/ng-template" id="newPrjDialog.tpl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" ng-click="close()">&times;</button>
-        <h4 class="modal-title">{{title}}</h4>
-      </div>
-      <div class="modal-body clearfix">
-        <form name="prj_form" novalidate role="form">
-          {{setForm(prj_form)}}
-          <div class="row">
-            <div class="form-group col-md-12">
-              <label>考评名称</label>
-              <input type="text" name="name" ng-model="prj.name" class="form-control" required placeholder="填写考评名称">
-              <p ng-show="post && prj_form.name.$error.required" class="help-block">
-                <span class="label label-danger">考评名称 不能为空！</span>
-              </p>
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group col-md-6">
-              <label>考评类别 （自评、互评）</label>
-              <select name="category" ng-model="prj.category" ng-options="c.v as c.name for c in cates" class="form-control" required >
-                <option value="">选择类别</option>
-              </select>
-              <p ng-show="post && prj_form.category.$error.required" class="help-block">
-                <span class="label label-danger">请选择考评类别！</span>
-              </p>
-            </div>
-            <div class="form-group col-md-6">
-              <label>考评类型 （个人、班子）</label>
-              <select name="type" ng-model="prj.type" ng-options="t.v as t.name for t in types" class="form-control" required >
-                <option value="">选择类型</option>
-              </select>
-              <p ng-show="post && prj_form.type.$error.required" class="help-block">
-                <span class="label label-danger">请选择考评类型！</span>
-              </p>
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group col-md-6">
-              <label>高分剪裁</label>
-              <p class="input-group">
-                <input name="high_cut" type="number" ng-model="prj.high_cut" class="form-control" required max="50" min="0" placeholder="0-50"/>
-                <span class="input-group-btn">
-                  <span class="btn btn-default">%</span>
-                </span>
-              </p>
-              <p ng-show="post && prj_form.high_cut.$error.min" class="help-block">
-                <span class="label label-danger">高分剪裁不能小余0</span>
-              </p>
-              <p ng-show="post && prj_form.high_cut.$error.max" class="help-block">
-                <span class="label label-danger">高分剪裁不能大余50</span>
-              </p>
-              <p class="help-block">
-                <span>去掉高分的百分比，填写0-50数字</span>
-              </p>
-            </div>
-            <div class="form-group col-md-6">
-              <label>低分剪裁</label>
-              <p class="input-group">
-                <input name="low_cut" type="number" ng-model="prj.low_cut" class="form-control" required max="50" min="0" placeholder="0-50"/>
-                <span class="input-group-btn">
-                  <span class="btn btn-default">%</span>
-                </span>
-              </p>
-              <p ng-show="post && prj_form.high_cut.$error.min" class="help-block">
-                <span class="label label-danger">低分剪裁不能小余0</span>
-              </p>
-              <p ng-show="post && prj_form.high_cut.$error.max" class="help-block">
-                <span class="label label-danger">低分剪裁不能大余50</span>
-              </p>
-              <p class="help-block">
-                <span>去掉低分的百分比，填写0-50数字</span>
-              </p>
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group col-md-6">
-              <label>开始时间</label>
-              <p class="input-group">
-                <input type="text" class="form-control" show-weeks='true' datepicker-popup="{{dp.format}}" ng-model="prj.begin_at" is-open="dp.beginDpOpened" min="'2014-01-01'" max="'2015-06-22'" datepicker-options="dp.dateOptions" current-text="今天" toggle-weeks-text="显示周" clear-text="清除"  close-text="关闭" ng-required="true" placeholder="年-月-日"/>
-                <span class="input-group-btn">
-                  <button class="btn btn-default" ng-click="openDp($event,'beginDpOpened')"><i class="glyphicon glyphicon-calendar"></i></button>
-                </span>
-              </p>
-              <p class="help-block" ng-model="prj.begin_at">
-                <timepicker hour-step="1" minute-step="1" show-meridian="false"></timepicker>
-              </p>
-            </div>
-            <div class="form-group col-md-6">
-              <label>结束时间</label>
-              <p class="input-group">
-                <input type="text" class="form-control" show-weeks='true' datepicker-popup="{{dp.format}}" ng-model="prj.end_at" is-open="dp.endDpOpened" min="'2014-01-01'" max="'2015-06-22'" datepicker-options="dp.dateOptions" ng-required="true" current-text="今天" toggle-weeks-text="显示周" clear-text="清除" close-text="关闭" placeholder="年-月-日" />
-                <span class="input-group-btn">
-                  <button class="btn btn-default" ng-click="openDp($event,'endDpOpened')"><i class="glyphicon glyphicon-calendar"></i></button>
-                </span>
-              </p>
-              <p class="help-block" ng-model="prj.end_at">
-                <timepicker hour-step="1" minute-step="1" show-meridian="false"></timepicker>
-              </p>
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group col-md-12">
-              <label>考评描述及评分说明</label>
-              <textarea rows="8" ng-model="prj.description" class="form-control" placeholder="填写考评说明，该说明会显示在前台考核页面。"></textarea>
-            </div>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" ng-click="close()">关闭</button>
-        <button type="button" class="btn btn-primary" ng-click="submit()">保存</button>
-      </div>
-    </div><!-- /.modal-content -->
-</script>
 <script type="text/javascript">
 (function($){
 var cates = <%- JSON.stringify(cates) %>;
 var types = <%- JSON.stringify(types) %>;
-var app = angular.module('heba.admin.prjs', ['ui.bootstrap'], angular.noop);
+var reportsCate = {
+  'PERSON' : <%- JSON.stringify(memberPosition) %>,
+  'DEPARTMENT' : <%- JSON.stringify(departmentCates) %>
+};
+var app = angular.module('heba.admin.repos', ['ui.bootstrap'], angular.noop);
 app.filter('cateName', function(){
   var labels = {
     'PA': 'primary',
@@ -281,17 +188,7 @@ app.filter('status', function(){
     return '<span class="label label-'+label+'">'+ name +'</span>'
   }
 });
-app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
-  var opts = {
-    backdrop: true,
-    keyboard: true,
-    templateUrl: 'newPrjDialog.tpl',
-    controller: 'NewPrjCtrl',
-    resolve: { data: function(){
-      return {};
-    }}
-  };
-
+app.controller('RepoCtrl', ['$scope', '$http', function($scope, $http){
   $scope.prjs = [];
   $scope.prjsTotal = 0;
   $scope.loading = false;
@@ -299,64 +196,34 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
   $scope.cates = cates;
   $scope.types = types;
   $scope.perpage = 20;
+  $scope.project = null;
+  $scope.reports = [];
+  $scope.cateFilters = null;
+  $scope.cateFilter = {};
 
-  $scope.delAll = function(){
-    var prjs = [];
-    angular.forEach($scope.prjs, function(prj, key){
-      if(prj.checked) {
-        prjs.push(prj.id);
-      }
+  $scope.export = function(project){
+    window.open('/admin/report?pid=' + project.id);
+  };
+
+  $scope.showReport = function(project){
+    $scope.project = project;
+    $scope.reportLoading = true;
+    $http.get('/admin/report', {params: { pid: project.id, format: 'json' }})
+    .success(function(json){
+      if(json && json.reports){
+        $scope.cateFilter.key = '0';
+        $scope.cateFilters = reportsCate[json.type];
+        $scope.reports = json.reports;
+        $scope.reportLoading = false;
+      }else{
+        hbex.showErr(json.errors, json.msg);
+      };
+    })
+    .error(function(data, status, headers, config) {
+      alert(data);
+      console.log(data);
+      $scope.reportLoading = false;
     });
-    if(prjs.length < 1){
-      alert('没有选择任何部门');
-      return;
-    }else{
-      if(confirm("删除考评将删除所有已评记录！\n确实要删除选定的"+ prjs.length +'个考评吗？')){
-        $http.delete('/admin/projects/'+ prjs.join('-'))
-            .success(function(json, status, headers, config) {
-                if(json && json.success){
-                  alert(json.msg);
-                  $scope.loadData();
-                }else{
-                  alert(json.msg);
-                }
-             })
-             .error(function(data, status, headers, config) {
-                alert(data);
-                console.log(data);
-             });
-      }
-    }
-  }
-
-  $scope.delPrj = function(prj){
-    if(confirm("删除考评将删除所有已评记录！\n确实要删除“"+ prj.name +'"')){
-      $http.delete('/admin/projects/'+ prj.id)
-            .success(function(json, status, headers, config) {
-                if(json && json.success){
-                  alert(json.msg);
-                  $scope.loadData();
-                }else{
-                  alert(json.msg);
-                }
-             })
-             .error(function(data, status, headers, config) {
-                alert(data);
-                console.log(data);
-             });
-    }
-  }
-
-  $scope.editPrj = function(prj){
-    var data = {
-      title: '修改考核',
-      prj: prj,
-      edit: true,
-      callback: function(){
-        $scope.loadData();
-      }
-    }
-    $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
   };
 
   $scope.loadData = function(keepPage){
@@ -386,16 +253,6 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
          });
   };
 
-  $scope.newPrj = function(){
-    var data = {
-      title: '新增考评',
-      callback: function(){
-        $scope.loadData();
-      }
-    }
-    $modal.open($.extend({},opts,{ resolve: {data: function(){ return data; }} }));
-  };
-
   $scope.numPages = function(){
     return Math.max(Math.ceil($scope.prjsTotal / $scope.perpage), 1);
   };
@@ -406,76 +263,11 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', function($scope, $modal
   $scope.$watch('filter.page', function(to, from){
     $scope.loadData(true);
   });
-
+  // $scope.$watch('cateFilter', function(to, from){
+  //   console.log(to);
+  // }, true);
   $scope.loadData();
 }]);
-
-app.controller('NewPrjCtrl',['$scope', '$modalInstance', 'data', '$http', function($scope, dialog, data, $http){
-  $scope.title = data.title || '';
-  $scope.prj = $.extend({}, data.prj);
-  $scope.post = false;
-  $scope.cates = [];
-  $scope.types = [];
-  angular.forEach(cates, function(v, key){
-    $scope.cates.push({v: key, name: v});
-  });
-  angular.forEach(types, function(v, key){
-    $scope.types.push({v: key, name: v});
-  });
-
-  $scope.dp = {
-    dateOptions : {
-      'year-format': "'yy'",
-      'starting-day': 1
-    },
-    format: 'yyyy-MM-dd'
-  }
-
-
-  $scope.openDp = function($event, key) {
-    $event.preventDefault();
-    $event.stopPropagation();
-
-    $scope.dp[key] = true;
-  };
-
-  //modal bug 无法获取自身scope的form
-  $scope.setForm = function(form){
-    $scope.prjForm = form;
-  };
-
-  $scope.close = function(){
-    dialog.close();
-  }
-
-  $scope.submit = function(){
-    $scope.post = true;
-    if($scope.prjForm.$invalid){ return false;}
-    var config = { method: 'POST', url: '/admin/projects/', data: { project: $scope.prj}};
-
-    if(data.edit){
-      config.method = 'PUT';
-      config.url = '/admin/projects/' + $scope.prj.id;
-    }
-
-    $http(config).success(function(json, status, headers, config) {
-                    if(json && json.success){
-                      alert(json.msg);
-                      if(data.callback){
-                        data.callback();
-                      }
-                      $scope.close();
-                    }else{
-                      hbex.showErr(json.errors, json.msg);
-                    }
-                 })
-                 .error(function(data, status, headers, config) {
-                    alert(data);
-                    console.log(data);
-                 });
-  }
-
-}]);
-angular.bootstrap(document.documentElement, ['heba.admin.prjs']);
+angular.bootstrap(document.documentElement, ['heba.admin.repos']);
 })(jQuery);
 </script>

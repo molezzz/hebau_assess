@@ -159,7 +159,7 @@ exports.updateRecordTotal = function(req, res){
         t = t + (rules[key] ? rules[key][ans[key]] : 0);
       };
       //record.total = t;
-      updateChainer.add(record, 'updateAttributes', [{ total: Math.ceil(t * 100) / 100 }, ['total']], {
+      updateChainer.add(record, 'updateAttributes', [{ total: Math.round(t * 100) / 100 }, ['total']], {
         after: function(record) {
           if((++finished % 200) == 0 || finished == records.length){
             io.clients[cid].emit('record_status',{total: records.length, current: finished});

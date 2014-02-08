@@ -150,8 +150,8 @@ module.exports = {
             if(record.total > 0) records[record[key]].push(record);
           });
           ex.forEach(records, function(arr, id){
-            var low = Math.max(Math.ceil(_self.low_cut * arr.length / 100), 0) * -1;
-            var high = Math.max(Math.ceil(_self.high_cut * arr.length / 100), 0);
+            var low = Math.max(Math.round(_self.low_cut * arr.length / 100), 0) * -1;
+            var high = Math.max(Math.round(_self.high_cut * arr.length / 100), 0);
             var report = {
               total: 0,
               project_id: _self.id,
