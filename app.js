@@ -57,7 +57,7 @@ var dbConfig = {
   test: 'mysql://bdall:bdall@192.168.3.2/assess'
 };
 //console.log([app.get('env'), dbConfig[app.get('env')]]);
-orm.setup(__dirname + '/models', dbConfig[app.get('env')],{ logging: console.log });
+orm.setup(__dirname + '/models', dbConfig[app.get('env')],{ logging: app.get('env') == 'production' ? false : console.info });
 // all environments
 app.engine('ejs', engine);
 app.set('port', process.env.PORT || 3000);
@@ -87,12 +87,23 @@ app.use(passport.session());
 app.use(app.router);
 // development only
 app.configure('development', function(){
+  app.use(function clientErrorHandler(err, req, res, next) {
+    if (req.xhr) {
+      res.send(500, { error: err });
+    } else {
+      next(err);
+    }
+  });
   app.use(express.errorHandler());
-
 });
 // production only
 app.configure('production', function(){
-
+  app.use(function(err, req, res, next) {
+    if(!err) return next();
+    console.error(err.stack);
+    res.status(500);
+    res.send('<html><body><h1>对不起，系统出现了问题，请联系系统管理员!</h1></body></html>');
+  });
 });
 app.locals.inspect = require('util').inspect;
 

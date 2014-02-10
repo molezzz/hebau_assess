@@ -1,5 +1,5 @@
 [{
-  "name"      : "echo",
+  "name"      : "hebau_assess",
   "script"    : "/var/web/hebau_assess/app.js",
   "args"      : "",
   "instances"  : "max",
