@@ -6,7 +6,6 @@
   "error_file" : "/var/web/hebau_assess/log/error.log",
   "out_file"   : "/var/web/hebau_assess/log/out.log",
   "pid_file"   : "/var/web/hebau_assess/log/child.pid",
-  //"exec_mode"  : "cluster_mode",
   "env": {
       "NODE_ENV": "production",
       "PORT": 80
