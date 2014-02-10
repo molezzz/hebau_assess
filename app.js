@@ -56,6 +56,7 @@ var dbConfig = {
   production: 'mysql://root:hebau2014@hebau.vm/assess',
   test: 'mysql://bdall:bdall@192.168.3.2/assess'
 };
+//console.log([app.get('env'), dbConfig[app.get('env')]]);
 orm.setup(__dirname + '/models', dbConfig[app.get('env')],{ logging: console.log });
 // all environments
 app.engine('ejs', engine);
@@ -229,5 +230,5 @@ socketSrv.io.sockets.on('disconnect', function () {
    console.log('disconnect client event....');
 });
 server.listen(app.get('port'), function(){
-  console.log('Express server listening on port ' + app.get('port'));
+  console.log('Express server listening on port ' + app.get('port') + ' in ' + app.get('env') + ' mode');
 });
