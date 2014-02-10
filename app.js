@@ -36,7 +36,8 @@ var app = express();
 var socketSrv = { io: null, clients: {} };
 
 var dbConfig = {
-  development: 'mysql://mole:mole628@221.194.37.108/assess',
+  development: 'mysql://root:hebau2014@hebau.vm/assess',
+  //development: 'mysql://mole:mole628@221.194.37.108/assess',
   //development: 'mysql://sql419985:fB4*dI1%25@sql4.freemysqlhosting.net/sql419985',
   /*
   //ORM2
@@ -52,7 +53,7 @@ var dbConfig = {
     }
   },
   */
-  production: 'mysql://hebau:hebau@localhost/assess',
+  production: 'mysql://root:hebau2014@hebau.vm/assess',
   test: 'mysql://bdall:bdall@192.168.3.2/assess'
 };
 orm.setup(__dirname + '/models', dbConfig[app.get('env')],{ logging: console.log });
