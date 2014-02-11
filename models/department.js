@@ -6,7 +6,7 @@ var cates = {
   '1': '教学单位',
   '2': '党群部门',
   '3': '科研教辅',
-  '0': '其他部门',
+  '0': '行政处室',
 }
 // see https://github.com/sequelize/sequelize/pull/894
 // (1) beforeValidate(dao, fn)
