@@ -49,3 +49,5 @@ $ pm2 sendSignal SIGUSR2 signal.js # Send system signal to script
 
 启动
 # pm2 start pm2_process.json
+启动pm2-web
+# pm2-web --www:port 9000 --ws:host 192.168.2.4

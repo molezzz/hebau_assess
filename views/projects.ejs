@@ -2,7 +2,7 @@
 <style>
 .g-sd { width: 160px; padding:36px 16px 40px 40px; overflow: visible;}
 body .g-mn {
-  width: 100%;  
+  width: 100%;
   left: 216px;
   background: #FFF;
   border-left: 1px solid #e7e7e7;
@@ -12,7 +12,7 @@ body .g-mn {
 
 <script type="text/javascript">
 $(window).resize(function(){
-  var h = $(window).height() - 180;  
+  var h = $(window).height() - 180;
   $('#_rightSide').css('height', h);
 });
 $(function(){
@@ -31,14 +31,14 @@ $(function(){
       <thead>
         <tr>
           <th class="cola">考评对象：</th>
-          <th colspan="2">            
+          <th colspan="2">
             <span class="name">{{item.name}}</span>
             <span class="description">{{item.description}}</span>
           </th>
-          <th>类型：{{pTypes[project.type]}}</th>          
+          <th>类型：{{pTypes[project.type]}}</th>
         </tr>
       </thead>
-      <tbody>        
+      <tbody>
         <tr ng-repeat="rule in project.rules">
           <td class="rule-group">{{rule.name}}</td>
           <td colspan="3">
@@ -47,21 +47,21 @@ $(function(){
                 <td class="cola">{{child.name}}</td>
                 <td class="colb">
                   <label ng-repeat=" (key, i) in child.items">
-                    <input type="radio" ng-required="true" ng-model="item.points[child.id]" ng-value="key"/>
+                    <span my-radio="child.key" my-model="item.points[child.id]" my-value="key"></span>
                     {{key}}
                   </label>
                 </td>
               </tr>
             </table>
           </td>
-        </tr>        
+        </tr>
       </tbody>
     </form></table>
     <div style="margin-top: 1em; text-align: right;">
       <button type="button" class="u-btn u-btn-c2" ng-click="skip()">不了解</button>
       <button type="button" class="u-btn" ng-click="okNext()">提交</button>
     </div>
-  </div>  
+  </div>
 </div>
 <div class="g-sd">
   <div id="menu" class="m-menu f-usn">
@@ -73,6 +73,24 @@ $(function(){
 </div>
 <script type="text/javascript">
 var app = angular.module('heba.projects', [], angular.noop);
+app.directive('myRadio', ['$compile', function($compile) {
+  return {
+    restrict: 'A',
+    scope:{
+      myRadio: '&'
+    },
+    //replace: true,
+    link: function($scope, $elem, $attrs, ctrl) {
+      var input = '<input type="radio" name="'+ $scope.myRadio() +'" ng-required="true" ng-model="'+ $attrs.myModel +'" ng-value="'+ $attrs.myValue +'"/>';
+      //console.log(scope.ngName());
+      //console.log(iElem);
+      //alert(scope.ngName());
+      //iElem.attr('name', scope.ngName());
+      var e = $compile(input)($scope.$parent);
+      $elem.replaceWith(e);
+    }
+  }
+}]);
 app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
   var pid = -1;
   var tid = -1;
@@ -99,8 +117,15 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
 
   //打分完毕
   $scope.okNext = function(skipValid){
-    console.log([$scope.ruleForm, $scope.ruleForm.$invalid]);
-    if(!skipValid && $scope.ruleForm.$invalid){
+    //console.log([$scope.ruleForm, $scope.ruleForm.$invalid]);
+    var checkPass = true;
+    for(var i in $scope.project._ruleKeys){
+      if(!$scope.item.points[$scope.project._ruleKeys[i]]){
+        checkPass = false;
+        break;
+      }
+    };
+    if(!skipValid && !checkPass){
       alert('您还有选项未选择，请选择！');
       return;
     };
@@ -111,7 +136,11 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
       department_id: $scope.project.type == 'DEPARTMENT' ? $scope.item.id : 0,
       answer: $scope.item.points
     };
-
+    // var s = [];
+    // for(var k in $scope.item.points){
+    //   s.push(k +' : '+ $scope.item.points[k]);
+    // };
+    // alert(s.join("\n"));
     $.jGrowl("正在保存，请稍候...", { life: 1000 });
     $http.post('/projects/records', {record : record})
     .success(function(json, status, headers, config){
@@ -128,7 +157,7 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
   };
 
   $scope.next = function(){
-    if(tid + 1 < $scope.items.length){      
+    if(tid + 1 < $scope.items.length){
       $scope.item = $scope.items[++tid];
       $scope.item.points = {};
       if($scope.recordExists[$scope.project.id] && $scope.recordExists[$scope.project.id][$scope.item.id]){
@@ -143,6 +172,15 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
   $scope.nextProject = function(){
     if(pid + 1 < $scope.projects.length){
       $scope.project = $scope.projects[++pid];
+      //用于验证是否所有选项都已选择
+      var _ruleKeys = [];
+      angular.forEach($scope.project.rules, function(prj, key){
+        angular.forEach(prj.children, function(rule, key){
+          _ruleKeys.push(rule.id);
+        });
+      });
+      $scope.project._ruleKeys = _ruleKeys;
+      console.log(_ruleKeys);
       tid = -1;
       if($scope.project.category == 'PA'){
         //互评
@@ -169,7 +207,7 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
           //人员考核
           $scope.items = [];
           angular.forEach($scope.members[$scope.account.department_id], function(member, key){
-            $scope.items.push(member);            
+            $scope.items.push(member);
           });
         } else {
           //班子考核
@@ -182,7 +220,7 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
       $scope.item = null;
       alert('考评项目已经全部完成，请退出！');
     }
-    
+
   };
   // $scope.$watch('items', function(to, from){
   //   console.log(to);
