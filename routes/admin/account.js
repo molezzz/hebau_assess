@@ -229,19 +229,22 @@ exports.disableAll = function(req, res){
 exports.destroy = function(req, res){
   var accounts = req.params.account.split('-');
   var Account = orm.model('account');
+  var Record = orm.model('record');
   var result = {success: false, msg: ''};
-  //TODO: 删除投票
-  Account.destroy({id: accounts})
-      .success(function(){
-        result.msg = '账户已删除！';
-        result.success = true;
-        res.json(result);
-      })
-      .error(function(errors){
-        result.msg = '删除失败! 写入数据库出错！';
-        console.log(errors);
-        res.json(result);
-      });
+  var chainer = new (orm.Seq().Utils.QueryChainer);
+  chainer.add(Record.destroy({account_id: accounts}))
+  .add(Account.destroy({id: accounts}))
+  .run()
+  .success(function(){
+    result.msg = '账户已删除！';
+    result.success = true;
+    res.json(result);
+  })
+  .error(function(errors){
+    result.msg = '删除失败! 写入数据库出错！';
+    console.log(errors);
+    res.json(result);
+  });
 
 };
 

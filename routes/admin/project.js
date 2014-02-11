@@ -98,19 +98,27 @@ exports.update = function(req, res){
 exports.destroy = function(req, res){
   var projects = req.params.project.split('-');
   var Project = orm.model('project');
+  var Record = orm.model('record');
+  var Rule = orm.model('rule');
+  var Report = orm.model('report');
   var result = {success: false, msg: ''};
-  //TODO 删除相关数据
-  Project.destroy({id: projects})
-      .success(function(){
-        result.msg = '考评已删除！';
-        result.success = true;
-        res.json(result);
-      })
-      .error(function(errors){
-        result.msg = '删除失败! 写入数据库出错！';
-        console.log(errors);
-        res.json(result);
-      });
+  var chainer = new (orm.Seq().Utils.QueryChainer);
+  chainer
+  .add(Report.destroy({project_id: projects}))
+  .add(Record.destroy({project_id: projects}))
+  .add(Rule.destroy({project_id: projects}))
+  .add(Project.destroy({id: projects}))
+  .run()
+  .success(function(){
+    result.msg = '考评已删除！';
+    result.success = true;
+    res.json(result);
+  })
+  .error(function(errors){
+    result.msg = '删除失败! 写入数据库出错！';
+    console.log(errors);
+    res.json(result);
+  });
 
 };
 
