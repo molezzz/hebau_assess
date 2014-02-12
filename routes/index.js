@@ -10,7 +10,7 @@ exports.index = function(req, res){
   if(isAcc){
     res.redirect('/projects');
   }else{
-    res.render('index', { title: 'Express', message: req.flash('error') });
+    res.render('index', { title: '登录', message: req.flash('error') });
   }
 };
 

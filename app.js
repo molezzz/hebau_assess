@@ -185,6 +185,14 @@ passport.adminAuth = function(req, res, next){
   }
 };
 
+app.all('*',function(req, res, next){
+  res.locals({
+    g: {
+      title: '河北农业大学干部考核测评管理系统2014版'
+    }
+  });
+  return next();
+});
 app.all('/admin/*', passport.adminAuth);
 app.get('/admin/setup', routes.setup);
 app.get('/admin/login', admin.login);

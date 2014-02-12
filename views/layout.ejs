@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8"/>
-<title><%= title %></title>
+<title><%=g.title%> - <%= title %></title>
 <meta name="keywords" content=""/>
 <meta name="description" content=""/>
 <meta name="viewport" content="width=device-width"/>
@@ -38,14 +38,14 @@ document.execCommand("BackgroundImageCache", false, true);
 </head>
 <body>
   <div class="g-hd">
-
+    <img src="/images/logo.png" alt="<%=g.title%>">
   </div>
   <div class="g-nv f-usn"><div class="g-in"><ul class="m-nav"> </ul></div></div>
   <%- body %>
   <div class="g-ft">
     <div class="g-in">
       <div class="m-ft">
-        <p><a href="mailto:21214646@qq.com?subject=hebau assess">意见反馈</a></p>
+        <p><%=g.title%> &nbsp;&nbsp; <a href="mailto:21214646@qq.com?subject=hebau assess">意见反馈</a></p>
         <p>Copyright © 2014-2015 Hebau. All Rights Reserved. </p> </div> </div>
   </div>
 </body>
