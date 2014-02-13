@@ -44,7 +44,9 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <span class="navbar-brand" style="color:#FFF;"><%=g.title%></span>
+        <span class="navbar-brand" style="color:#FFF;padding: 0 0.5em;">
+          <img src="/images/admin_logo.png" alt="<%=g.title%>"/>
+        </span>
       </div>
 
       <!-- Collect the nav links, forms, and other content for toggling -->
@@ -52,6 +54,7 @@
         <ul class="nav navbar-nav navbar-left">
           <% if(admin){ -%>
           <% if(admin.is_admin){ -%>
+          <li class="<%= typeof dashboardMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/dashboard">系统</a></li>
           <li class="<%= typeof userMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/users">用户</a></li>
           <li class="<%= typeof departmentMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/departments">部门</a></li>
           <li class="<%= typeof memberMenuActive == 'undefined' ? '' : 'active' %>"><a href="/admin/members">人员</a></li>
