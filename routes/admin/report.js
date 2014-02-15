@@ -76,6 +76,9 @@ exports.show = function(req, res){
       //console.log(reports);
       switch (format) {
         case 'json':
+          ex.forEach(reports, function(report, key){
+            report.detail = JSON.parse(report.detail || '{}');
+          });
           result.reports = reports;
           result.type = type;
           res.json(result);

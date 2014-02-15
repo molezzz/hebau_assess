@@ -9,8 +9,9 @@ module.exports = {
     department_id: { type: Seq.INTEGER, allowNull: false, defaultValue: 0 },
     member_id: { type: Seq.INTEGER, allowNull: false, defaultValue: 0 },
     account_id: { type: Seq.INTEGER, allowNull: false, defaultValue: 0 },
-    project_id: { type: Seq.INTEGER, allowNull: false, defaultValue: 0 },     
+    project_id: { type: Seq.INTEGER, allowNull: false, defaultValue: 0 },
     answer: { type: Seq.TEXT, allowNull: true, comment: '投票记录'},
+    detail: { type: Seq.TEXT, allowNull: true, comment: '各项分数详情'},
     total: {type: Seq.FLOAT, allowNull: false, defaultValue: 0, comment: '总分' }
   },
   relations: {
@@ -24,6 +25,9 @@ module.exports = {
     getterMethods: {
       answer: function(){
         return JSON.parse(this.getDataValue('answer'));
+      },
+      detail: function(){
+        return JSON.parse(this.getDataValue('detail') || '{}');
       }
     },
     setterMethods: {
@@ -31,10 +35,15 @@ module.exports = {
         if(!answer) answer = {};
         this.setDataValue('answer', JSON.stringify(answer));
         return;
+      },
+      detail: function(detail){
+        if(!detail) detail = {};
+        this.setDataValue('detail', JSON.stringify(detail));
+        return;
       }
     },
     classMethods: {
-      
+
     },
     instanceMethods: {
 

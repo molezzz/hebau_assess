@@ -135,7 +135,7 @@ module.exports = {
         chainer.add(Record.findAll({
           where: { project_id: _self.id },
           order: '`' + key + '` DESC , `total` DESC',
-          attributes: ['id', 'member_id', 'department_id', 'account_id', 'project_id', 'total']
+          attributes: ['id', 'member_id', 'department_id', 'account_id', 'project_id', 'total', 'detail']
         })).add(Account.count({
           where: { invalid: false }
         }));
@@ -158,6 +158,7 @@ module.exports = {
               account_count: accountTotal,
               abstentions: accountTotal - arr.length
             };
+            var detail = {};
             //去掉高分、去掉低分
             if(low == 0){
               arr.slice(high);
@@ -165,11 +166,26 @@ module.exports = {
               arr.slice(high, low);
             };
             //console.log(low, high, arr);
-            ex.forEach(arr, function(r){
+            ex.forEach(arr, function(r, idx){
+              for(var pid in r.detail){
+                detail[pid] = detail[pid] || {};
+                for(var cid in r.detail[pid]){
+                  detail[pid][cid] = detail[pid][cid] || 0;
+                  detail[pid][cid] += r.detail[pid][cid];
+                }
+              };
               report.total += r.total;
             });
             report[key] = id;
             report.valids = arr.length;
+            //计算平均分
+            ex.forEach(detail, function(p){
+              ex.forEach(p, function(c, idx){
+                p[idx] = Math.round(c * 100 / report.valids) / 100;
+              });
+              return p;
+            });
+            report.detail = detail;
             //console.log(report);
             reports.push(report);
           });

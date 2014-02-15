@@ -47,7 +47,7 @@ module.exports = {
     },
     getterMethods: {
       items: function(){
-        return JSON.parse(this.getDataValue('items'));
+        return JSON.parse(this.getDataValue('items') || 'null');
       }
     },
     setterMethods: {

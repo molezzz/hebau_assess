@@ -18,6 +18,10 @@ module.exports = {
       validate: {
         notEmpty: { msg: '用户名不能为空'}
       }
+    },
+    category:{
+      type: Seq.STRING, allowNull: false, defaultValue: 'SA',
+      comment: '参与评选的类别： PA 互评，SA 自评'
     }
   },
   relations: {

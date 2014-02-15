@@ -3,6 +3,40 @@
 <% script('/javascripts/moment-with-langs.js') -%>
 
 <div class="row" ng-controller="RepoCtrl" style="height:100%;">
+
+  <div ng-show="reportDetail" ng-class="{modal: reportDetail}">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="modalClose()">&times;</button>
+          <h3 class="modal-title">{{reportDetail.name}} <small>总分： {{reportDetail.total}}</small></h3>
+        </div>
+        <div class="modal-body">
+          <h4>各项平均分：</h4>
+          <div class="panel panel-default" ng-repeat="(pid, pRule) in reportDetail.detail">
+            <div class="panel-heading">{{project.rules[pid].name}}</div>
+            <table class="table table-striped">
+              <tbody>
+                <tr  ng-repeat="(cid, score) in pRule">
+                  <td style="width:10em;">{{project.rules[cid].name}}</td>
+                  <td style="width:3em;">
+                    {{score}}
+                  </td>
+                  <td>
+                    <progressbar class="progress-striped active" value="getScore(score,project.rules[cid].max)" type="{{scoreType[$parent.$index % 5]}}"><i>{{score}} / {{project.rules[cid].max}}</i></progressbar>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="modalClose()">关闭</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+
   <div class="col-md-12 loading-wrap">
     <div class="loading-box" ng-show="loading">
       <div class="progress progress-striped active">
@@ -72,7 +106,7 @@
               <td>{{ prj.name }}</td>
               <td ng-bind-html-unsafe="prj.category | cateName"></td>
               <td ng-bind-html-unsafe="prj.type | typeName"></td>
-              <td  ng-bind-html-unsafe="prj | status"></td>
+              <td ng-bind-html-unsafe="prj | status"></td>
             </tr>
           </tbody>
         </table>
@@ -111,6 +145,7 @@
               <th>平均分</th>
               <th>参与投票人数</th>
               <th>有效票数</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -122,6 +157,12 @@
               <td>{{report.avg}}</td>
               <td>{{report.account_count}}</td>
               <td>{{report.valids}}</td>
+              <td>
+                <button class="btn btn-default btn-sm" ng-click="showDetail(report)">
+                  <i class="glyphicon glyphicon-th-list"></i>
+                  详情
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -200,9 +241,26 @@ app.controller('RepoCtrl', ['$scope', '$http', function($scope, $http){
   $scope.reports = [];
   $scope.cateFilters = null;
   $scope.cateFilter = {};
+  $scope.reportDetail = null;
+  $scope.scoreType = ['primary', 'success', 'info', 'warning', 'danger'];
+
+  $scope.getScore = function(score,max){
+    //console.log([score,max,Math.ceil((score/max) * 100)]);
+    return Math.ceil((score/max) * 100);
+  };
+
+  $scope.modalClose = function(){
+    $scope.reportDetail = null;
+  };
 
   $scope.export = function(project){
     window.open('/admin/report?pid=' + project.id);
+  };
+
+  $scope.showDetail = function(report){
+    //console.log(report);
+    //console.log($scope.project);
+    $scope.reportDetail = report;
   };
 
   $scope.showReport = function(project){

@@ -11,12 +11,49 @@ var shared = {
 
 exports.index = function(req, res){
   var Project = orm.model('project');
+  var Rule = orm.model('rule');
   switch (req.format) {
       case 'json':
         var opts = Project.pages(req.query.page, req.query.prepage);
         opts.order = 'id DESC';
         Project.search(req.query.q || {}, opts).success(function(projects){
-          res.json({ total: projects.count, projects: projects.rows });
+          Rule.findAll({
+            where: {project_id: ex.pluck(projects.rows, 'id')},
+            attributes: ['id','name','parent_id','scale','items','project_id']
+          }).success(function(rules){
+            var _r = {};
+            ex.forEach(rules, function(r){
+              if(!_r[r.project_id]) _r[r.project_id] = [];
+              _r[r.project_id].push(r);
+            });
+            var ps = [];
+            ex.forEach(projects.rows, function(p){
+              p = p.dataValues;
+              var rules = {};
+              ex.forEach(_r[p.id], function(r){
+                rules[r.id] = r;
+              });
+              // if(p.id == 1){
+              //   ex.forEach(p.rules, function(r){
+              //     console.log(r.id);
+              //   });
+              // };
+              //计算最高分
+              ex.forEach(rules, function(r, idx){
+                if(r.parent_id == 0) return;
+                var scale = rules[r.parent_id] ? rules[r.parent_id].scale : 100;
+                rules[idx] = {
+                  id: r.id,
+                  name: r.name,
+                  parent_id: r.parent_id,
+                  max: (Math.round(ex.max(ex.values(r.items)) * scale) / 100) || 0
+                };
+              });
+              p.rules = rules;
+              ps.push(p);
+            });
+            res.json({ total: projects.count, projects: ps });
+          });
         });
         break;
       default:
@@ -122,7 +159,7 @@ exports.destroy = function(req, res){
 
 };
 
-//更新record的总分
+//更新record的总分和小项得分
 exports.updateRecordTotal = function(req, res){
   var chainer = new (orm.Seq().Utils.QueryChainer)();
   var Rule = orm.model('rule');
@@ -147,6 +184,7 @@ exports.updateRecordTotal = function(req, res){
     var finished = 0;
     var io = res.socketSrv;
     var cid = req.body['cid'];
+
     io.clients[cid].emit('record_status',{total: records.length, current: finished});
 
     ex.forEach(result[0], function(pRule){
@@ -156,20 +194,29 @@ exports.updateRecordTotal = function(req, res){
         for(key in items){
           items[key] = (items[key] * pRule.scale) / 100;
         };
-        rules[rule.id] = items;
+        rules[rule.id] = {pid: pRule.id, items: items};
       });
     });
     ex.forEach(records, function(record, id){
       var t = 0;
       var ans = record.answer;
+      var p = 0;
+      var detail = {};
       for(key in ans){
         //console.log([ans[key], rules[key], rules[key][ans[key]] ]);
-        t = t + (rules[key] ? rules[key][ans[key]] : 0);
+        if(rules[key]){
+          detail[rules[key].pid] = detail[rules[key].pid] || {};
+          p = rules[key]['items'][ans[key]];
+          detail[rules[key].pid][key] = p;
+        } else {
+          p = 0;
+        };
+        t = t + p;
       };
       //record.total = t;
-      updateChainer.add(record, 'updateAttributes', [{ total: Math.round(t * 100) / 100 }, ['total']], {
+      updateChainer.add(record, 'updateAttributes', [{ total: Math.round(t * 100) / 100, detail: detail }, ['total','detail']], {
         after: function(record) {
-          if((++finished % 200) == 0 || finished == records.length){
+          if((++finished % 20) == 0 || finished == records.length){
             io.clients[cid].emit('record_status',{total: records.length, current: finished});
           };
           console.log(record.id);
