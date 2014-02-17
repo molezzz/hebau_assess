@@ -77,7 +77,7 @@
                 <img class="media-object" alt="64x64" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABTElEQVR4Xu2YQQ7DIAwE4ZSHJc/Om3LPKRUHtzSFVBgQlpgeQ2Ps1bLT4o/juNzEH48AOIAjQAZMnIGOEIQCUAAKQAEoMLECYBAMgkEwCAYnhgB/hsAgGASDYBAMgsGJFQCDLTC47/vbQ9u2/fhJ1lNrOfP1qJnaq9oB8XCpQf8NkmqqR82c0FUChEa9925d12yKlArQo+ZTxDUR4Lo+JI1tHg8fmpA1eb4sizvP8+v4iAClNbU5Xi2AbByGy1k3dzRiAe7iiGAlNTUiVAsQH4FUs/emUg65P6upWSpCNwHiRkodkBPgX83S4cP3qwQIBXLnXJpJrT9lgLamZvgmAmg3tvJetQOsDKLtAwFa/BTWqm/hPRyAA7gT5E6QO0ELaTyqBygABaAAFIACoxLYwr5QAApAASgABSyk8ageoAAUgAJQAAqMSmAL+74A0deRkB1poOYAAAAASUVORK5CYII=" style="width: 64px; height: 64px;">
               </a>
               <div class="media-body">
-                <h4 class="media-heading">{{member.name}}</h4>
+                <h4 class="media-heading">{{member.name}} <small>{{member.gender | gender}} {{member.birthday}}</small></h4>
                 <p>
                   <span class="label label-default">{{member.department.name}}</span>
                   <span class="label" ng-class="{'label-danger': 0 == member.position_id, 'label-warning': 1 == member.position_id, 'label-success': 2 == member.position_id, 'label-info': 3 == member.position_id}">{{positions[member.position_id]}}</span>
@@ -125,6 +125,13 @@
             </p>
           </div>
           <div class="form-group">
+            <label>性别</label>
+            <div class="btn-group clearfix" style="display:block;">
+              <button type="button" class="btn btn-primary" ng-model="member.gender" btn-radio="'M'">男</button>
+              <button type="button" class="btn btn-primary" ng-model="member.gender" btn-radio="'F'">女</button>
+            </div>
+          </div>
+          <div class="form-group">
             <label>所属机构</label>
             <select name="department_id" ng-model="member.department_id" ng-options="d.id as d.name group by d.g for d in deps" class="form-control" required >
               <option value="">选择机构</option>
@@ -141,6 +148,10 @@
             <p ng-show="post && member_form.position_id.$error.required" class="help-block">
               <span class="label label-danger">请选择级别！</span>
             </p>
+          </div>
+          <div class="form-group">
+            <label>出生年月</label>
+            <input name="birthday" ng-model="member.birthday" class="form-control" placeholder="出生年月，例如：197501"/>
           </div>
           <div class="form-group">
             <label>详细职务描述及其他说明</label>
@@ -175,6 +186,11 @@ app.filter('cateName', function(){
   return function(val){
     return '<span class="label label-'+labels[val]+'">'+ cates[val] +'</span>'
   }
+});
+app.filter('gender', function(){
+  return function(val){
+    return ({'F': '女', 'M': '男'})[val];
+  };
 });
 app.controller('MembersCtrl', ['$scope', '$modal', '$http', function($scope, $modal, $http){
   var opts = {
@@ -324,7 +340,7 @@ app.controller('MembersCtrl', ['$scope', '$modal', '$http', function($scope, $mo
 
 app.controller('NewMemberCtrl',['$scope', '$modalInstance', 'data', '$http', function($scope, modal, data, $http){
   $scope.title = data.title || '';
-  $scope.member = $.extend({}, data.member);
+  $scope.member = $.extend({gender: 'M'}, data.member);
   $scope.post = false;
   $scope.deps = deps;
   $scope.positions = positions;

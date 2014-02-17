@@ -85,7 +85,7 @@ exports.update = function(req, res){
   var result = {success: false, msg: ''};
 
   Member.find(memberId).success(function(member){
-    member.updateAttributes(req.body.member, ['name', 'category_id', 'parent_id','description'])
+    member.updateAttributes(req.body.member, ['name', 'category_id', 'parent_id', 'gender', 'birthday', 'description'])
         .success(function(){
           result.msg = '更新成功';
           result.success = true;

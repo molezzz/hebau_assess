@@ -57,7 +57,7 @@ exports.show = function(req, res){
     var _r = null;
     if(project.type == 'PERSON'){
       _r = orm.seq().query(
-        'SELECT r.*,m.position_id AS cate, (ROUND((r.total / r.valids) * 100) / 100) AS avg, m.name AS name, d.name AS `department.name`, d.id AS `department.id`, d.category_id AS `department.category_id` FROM `reports` AS r '
+        'SELECT r.*,m.position_id AS cate, (ROUND((r.total / r.valids) * 100) / 100) AS avg, m.name AS name, m.description AS description, d.name AS `department.name`, d.id AS `department.id`, d.category_id AS `department.category_id` FROM `reports` AS r '
         + ' INNER JOIN `members` AS m ON m.id = r.member_id '
         + ' LEFT JOIN `departments` AS d ON d.id = m.department_id'
         + ' WHERE r.project_id = ' + project.id
@@ -124,6 +124,10 @@ exports.show = function(req, res){
 
           if(project.type == 'PERSON'){
             conf.cols = conf.cols.concat([{
+              caption:'职位描述',
+              type:'string',
+              width: 20
+            },{
               caption:'所属部门',
               type:'string',
               width: 10
@@ -138,7 +142,7 @@ exports.show = function(req, res){
             ex.forEach(reports, function(report, idx){
               conf.rows.push([
                 idx + 1, report.name, report.cate, report.total, report.avg,
-                report.account_count, report.valids, report.department.name,
+                report.account_count, report.valids, report.description,report.department.name,
                 report.department.category_id
               ]);
             });
