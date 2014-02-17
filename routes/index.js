@@ -34,7 +34,7 @@ exports.projects = function(req, res){
     attributes: ['id','department_id','name','description','position_id']
   }))
   .add(Project.findAll({
-    where: { begin_at : {lt: now}, end_at: {gt: now} },
+    where: { begin_at : {lt: now}, end_at: {gt: now}, category: account.category },
     include: [{
       model: Rule, as: 'rules',where: {parent_id: 0},
       include: [{model: Rule, as: 'children'}]
@@ -84,17 +84,43 @@ exports.projects = function(req, res){
 
 exports.saveRecord = function(req, res){
   var Record = orm.model('record');
+  var Project = orm.model('project');
   var record = req.body['record'];
   var result = {success: false, msg: ''};
   var account = req.user;
+  var now = new Date();
+
   record.account_id = account.id;
 
-  Record.create(record).success(function(rule){
-    result.success = true;
-    result.msg = '结果保存成功！';
-    result.rule = rule;
-    res.json(result);
-  }).error(function(errors){
+  Project.find({
+    where: {
+      id: record.project_id,
+      category: account.category,
+      begin_at: {lt: now},
+      end_at: {gt: now}
+    },
+    attributes: ['id', 'category']
+  })
+  .success(function(project){
+    if(!project) {
+      result.msg = '结果保存失败，项目不存在，或暂不允许“'+ account.name +'”投票';
+      result.errors = null;
+      res.json(result);
+      return;
+    };
+    Record.create(record).success(function(rule){
+      result.success = true;
+      result.msg = '结果保存成功！';
+      result.rule = rule;
+      res.json(result);
+    }).error(function(errors){
+      result.msg = '结果保存失败';
+      result.errors = errors;
+      console.log(errors);
+      res.json(result);
+    });
+  })
+  .error(function(errors){
     result.msg = '结果保存失败';
     result.errors = errors;
     console.log(errors);

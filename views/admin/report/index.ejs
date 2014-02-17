@@ -14,7 +14,7 @@
         <div class="modal-body">
           <h4>各项平均分：</h4>
           <div class="panel panel-default" ng-repeat="(pid, pRule) in reportDetail.detail">
-            <div class="panel-heading">{{project.rules[pid].name}}</div>
+            <div class="panel-heading">【{{project.rules[pid].name}}】 单项总分： {{pRule | getTotal}}</div>
             <table class="table table-striped">
               <tbody>
                 <tr  ng-repeat="(cid, score) in pRule">
@@ -23,7 +23,7 @@
                     {{score}}
                   </td>
                   <td>
-                    <progressbar class="progress-striped active" value="getScore(score,project.rules[cid].max)" type="{{scoreType[$parent.$index % 5]}}"><i>{{score}} / {{project.rules[cid].max}}</i></progressbar>
+                    <progressbar style="margin-bottom: 0;" class="progress-striped" value="getScore(score,project.rules[cid].max)" type="{{scoreType[$parent.$index % 5]}}"><i>{{score}} / {{project.rules[cid].max}}</i></progressbar>
                   </td>
                 </tr>
               </tbody>
@@ -200,6 +200,16 @@ app.filter('cateName', function(){
   return function(val){
     return '<span class="label label-'+labels[val]+'">'+ cates[val] +'</span>'
   }
+});
+app.filter('getTotal', function(){
+  //计算大项总分
+  return function(rule){
+    var t = 0;
+    for(var k in rule){
+      if(k != '$$hashKey') t += rule[k];
+    };
+    return t;
+  };
 });
 app.filter('typeName', function(){
   var labels = {

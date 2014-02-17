@@ -14,6 +14,7 @@ var shared = {
 exports.index = function(req, res){
   var Account = orm.model('account');
   var Department = orm.model('department');
+  var Project = orm.model('project');
 
   switch (req.format) {
       case 'json':
@@ -26,7 +27,7 @@ exports.index = function(req, res){
         break;
       default:
         res.render('admin/account/index',
-          ex.extend({ title: '账户管理', cates: Department.cates() }, shared)
+          ex.extend({ title: '账户管理', cates: Department.cates(), projectCates: Project.cates() }, shared)
         );
   }
 };
@@ -68,14 +69,17 @@ exports.wizardRun = function(req, res){
   for(var id in deps){
     var prefix = rnds.generate(2);
     records[id] = [];
-    for (var i = 0; i < deps[id]; i++) {
-      total++;
-      records[id].push({
-        name: (prefix + '-' + rnds.generate(6)).toLowerCase(),
-        department_id: id,
-        group_key: groupKey,
-        invalid: false
-      });
+    for(var cate in deps[id]){
+      for (var i = 0; i < deps[id][cate]; i++) {
+        total++;
+        records[id].push({
+          name: (prefix + '-' + rnds.generate(6)).toLowerCase(),
+          department_id: id,
+          group_key: groupKey,
+          category: cate,
+          invalid: false
+        });
+      };
     };
   };
   io.clients[cid].emit('account_status',{msg: '账号已生成，总计: '+ total +'个，开始写入数据库。', total: total});
@@ -140,6 +144,7 @@ exports.create = function(req, res){
         name: (prefix + '-' + rnds.generate(6)).toLowerCase(),
         department_id: params.department_id,
         group_key: groupKey,
+        category: params.category,
         invalid: false
       });
     };
@@ -277,8 +282,8 @@ exports.excel = function(req, res){
     ex.forEach(deps, function(dep){
       dHash[dep.id] = dep.name;
     });
-    Account.findAll({
-      where: { invalid: false } ,
+    Account.search(ex.extend(req.query.q, {'invalid_eq': false}), {
+      //where: { invalid: false } ,
       attributes: ['name', 'department_id', 'invalid', 'group_key'],
       order: 'department_id DESC'
     }).success(function(accounts){

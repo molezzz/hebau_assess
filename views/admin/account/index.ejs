@@ -35,7 +35,17 @@
 
           <div class="btn-group navbar-right">
             <button type="button" title="刷新" class="btn btn-default navbar-btn btn-sm" ng-click="loadData()"><span class="glyphicon glyphicon-refresh"></span></button>
-            <button type="button" title="导出所有有效账户" class="btn btn-default navbar-btn btn-sm" ng-click="export()"><span class="glyphicon glyphicon-share"></span></button>
+            <a title="导出所有有效账户" class="btn btn-default navbar-btn btn-sm dropdown-toggle">
+              <i class="glyphicon glyphicon-share"></i>
+            </a>
+            <ul class="dropdown-menu">
+              <li>
+                <a ng-click="export()">全部导出</a>
+              </li>
+              <li>
+                <a ng-click="export(true)">导出当前选择</a>
+              </li>
+            </ul>
           </div>
 
           <form class="navbar-form navbar-right" role="search">
@@ -46,7 +56,8 @@
           </form>
 
           <div class="btn-group navbar-right">
-
+            <button type="button" class="btn btn-default navbar-btn btn-sm" ng-model="filter.category" btn-radio="'ALL'">全部</button>
+            <button ng-repeat="(key, value) in accCates" type="button" class="btn btn-default navbar-btn btn-sm" ng-model="filter.category" btn-radio="'{{key}}'">{{value}}</button>
           </div>
 
         </div><!-- /.navbar-collapse -->
@@ -70,9 +81,15 @@
               </div>
               <ul class="list-group">
                 <li class="list-group-item" ng-repeat="dep in deps">
+                  <h4><span class="label label-default">{{dep.name}}</span></h4>
                   <div class="input-group">
-                    <span class="input-group-addon">{{dep.name}}</span>
-                    <input type="number" min="0" class="form-control" ng-model="dep.total"/>
+                    <span class="input-group-addon">互评</span>
+                    <input type="number" min="0" class="form-control" ng-model="dep.total.PA"/>
+                    <span class="input-group-addon">个</span>
+                  </div>
+                  <div class="input-group" style="margin-top:0.5em;">
+                    <span class="input-group-addon">自评</span>
+                    <input type="number" min="0" class="form-control" ng-model="dep.total.SA"/>
                     <span class="input-group-addon">个</span>
                   </div>
                 </li>
@@ -134,6 +151,7 @@
               <th>#</th>
               <th>部门</th>
               <th>帐户名</th>
+              <th>类型</th>
               <th>分组</th>
               <th>有效</th>
               <th>最后登录时间</th>
@@ -149,6 +167,7 @@
                 {{ acc.name }}
                 <span class="label label-danger" ng-show="accsNew[acc.name]">New</span>
               </td>
+              <td>{{ acc.category | accCate }}</td>
               <td>{{ acc.group_key }}</td>
               <td><span class="label" ng-class="{'label-success': !acc.invalid, 'label-danger': acc.invalid}">{{ acc.invalid | accStatus }}</span></td>
               <td>{{ acc.last_login_at | date:'yyyy-MM-dd' }}</td>
@@ -199,9 +218,49 @@
     </div><!-- /.modal-content -->
 </script>
 
+<script type="text/ng-template" id="newAcc.tpl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" ng-click="close()">&times;</button>
+        <h4 class="modal-title">添加新账号</h4>
+      </div>
+      <div class="modal-body">
+        <form name="acc_form" novalidate role="form">
+          {{setForm(acc_form)}}
+          <div class="form-group">
+            <label>所属类别</label>
+            <select name="category" ng-model="account.category" ng-options="k as v for (k, v) in accCates" class="form-control" required >
+              <option value="">选择类别</option>
+            </select>
+            <p ng-show="acc_form.category.$error.required" class="help-block">
+              <span class="label label-danger">请选择所属类别！</span>
+            </p>
+          </div>
+          <div class="form-group">
+            <label>数量</label>
+            <input type="number" name="count" ng-model="account.count" class="form-control" required placeholder="填写添加数量" min='1'>
+            <p ng-show="acc_form.count.$error.required" class="help-block">
+              <span class="label label-danger">数量不能为空！</span>
+            </p>
+            <p ng-show="acc_form.count.$error.min" class="help-block">
+              <span class="label label-danger">数量不能小于1！</span>
+            </p>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer clearfix">
+        <div class="pull-right">
+          <button class="btn btn-default" ng-click="close()">取消</button>
+          <button class="btn btn-primary" ng-click="save()">确定</button>
+        </div>
+      </div>
+    </div><!-- /.modal-content -->
+</script>
+
 <script type="text/javascript">
 (function($){
 var cates = <%- JSON.stringify(cates) %>;
+var accCates = <%- JSON.stringify(projectCates) %>;
 var app = angular.module('heba.admin.accs', ['ui.bootstrap'], angular.noop);
 app.filter('cateName', function(){
   var labels = {
@@ -218,6 +277,11 @@ app.filter('accStatus', function(){
   return function(val){
     return val ? '否' : '是';
   }
+});
+app.filter('accCate', function(){
+  return function(val){
+    return accCates[val];
+  };
 });
 app.factory('wizardSS', function($rootScope) {
   var sharedService = {
@@ -241,7 +305,7 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
   $scope.accsNew = {};
   $scope.accsTotal = 0;
   $scope.dpLoading = false;
-  $scope.filter = { name: '', department: null, page: 1 };
+  $scope.filter = { name: '', department: null, page: 1, category: 'ALL' };
   $scope.cates = cates;
   $scope.perpage = 20;
   $scope.depsFilter = { name: '', category: 1, page: 1 };
@@ -249,32 +313,22 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
   $scope.onWizard = false;
   $scope.wizardDeps = {};
   $scope.wLoading = false;
+  $scope.accCates = accCates;
+  $scope.account = {};
 
   $scope.addAccTo = function(dep){
     if(!dep){
       alert('请先选择部门！');
       return;
     };
-    var count = parseInt(prompt('向“'+ dep.name +'”添加账户，请输入数量：', 1));
-    if(count > 0) {
-      $http.post('/admin/accounts',{account: { department_id: dep.id, count: count}})
-      .success(function(json, status, headers, config){
-        if(json.success){
-          alert(json.msg);
-          $scope.accsNew = {};
-          angular.forEach(json.accounts, function(acc, key){
-            $scope.accsNew[acc.name] = true;
-          });
-          $scope.loadData();
-        }else{
-          hbex.showErr(json.errors, json.msg);
-        };
-      })
-      .error(function(data, status, headers, config) {
-          alert(data);
-          console.log(data);
-       });
-    };
+    $scope.account.department_id = dep.id;
+    $modal.open({
+      backdrop: true,
+      keyboard: false,
+      templateUrl: 'newAcc.tpl',
+      controller: 'newAccCtrl',
+      scope: $scope
+    });
   };
 
   $scope.accWizard = function(){
@@ -314,8 +368,20 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
     };
   };
 
-  $scope.export = function(){
-    window.open('/admin/accounts/excel');
+  $scope.export = function(filter){
+    var url = ''
+    var query = [];
+    if(filter){
+      if($scope.filter.category != '' && $scope.filter.category != 'ALL'){
+        query.push('q[category_eq]=' + $scope.filter.category);
+      };
+      if($scope.filter.department !== null && $scope.filter.department.id != 0){
+        query.push('q[department_id_eq]=' + $scope.filter.department.id);
+      };
+      window.open('/admin/accounts/excel?'+ query.join('&'));
+    }else{
+      window.open('/admin/accounts/excel');
+    }
   };
 
   $scope.showCateAcc = function(dep){
@@ -398,6 +464,9 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
       //清空部门
       $scope.filter.department = null;
     };
+    if($scope.filter.category != '' && $scope.filter.category != 'ALL'){
+      query['q[category_eq]'] = $scope.filter.category;
+    };
     if($scope.filter.department !== null && $scope.filter.department.id != 0){
       query['q[department_id_eq]'] = $scope.filter.department.id;
     };
@@ -467,7 +536,8 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
     angular.forEach($scope.wizardDeps, function(group, key){
       angular.forEach(group, function(dep, k){
         //dep.total = (200 - Math.ceil(Math.random() * 50));
-        if(dep.total > 0){
+        console.log(dep.total);
+        if(dep.total && (dep.total.PA > 0 || dep.total.SA > 0)){
           deps[dep.id] = dep.total;
           _blank = false;
         };
@@ -513,6 +583,9 @@ app.controller('AccsCtrl', ['$scope', '$modal', '$http', 'wizardSS', function($s
   $scope.$watch('filter.page', function(to, from){
     $scope.loadData(true);
   });
+  $scope.$watch('filter.category', function(to, from){
+    $scope.loadData();
+  });
   $scope.$watch('depsFilter.category', function(to, from){
     $scope.loadDeps();
   });
@@ -540,6 +613,42 @@ app.controller('dialogCtrl',['$scope', '$modalInstance', '$http', 'wizardSS', fu
     //console.log('change', $scope.data);
     $scope.$digest();
   });
+}]);
+app.controller('newAccCtrl',['$scope', '$modalInstance', '$http', function($scope, modal, $http){
+
+  $scope.setForm = function(form){
+    $scope.accForm = form;
+  };
+
+  $scope.close = function(){
+    modal.close();
+  };
+
+  $scope.save = function(){
+    //console.log($scope.account, $scope.accForm.$valid);
+    if($scope.accForm.$valid) {
+      $http.post('/admin/accounts',{account: $scope.account})
+      .success(function(json, status, headers, config){
+        if(json.success){
+          alert(json.msg);
+          //$scope.accsNew = {};
+          angular.forEach(json.accounts, function(acc, key){
+            $scope.accsNew[acc.name] = true;
+          });
+          modal.close();
+          console.log($scope.accsNew);
+          $scope.loadData();
+        }else{
+          hbex.showErr(json.errors, json.msg);
+        };
+      })
+      .error(function(data, status, headers, config) {
+          alert(data);
+          console.log(data);
+       });
+    };
+  };
+
 }]);
 angular.bootstrap(document.documentElement, ['heba.admin.accs']);
 })(jQuery);
