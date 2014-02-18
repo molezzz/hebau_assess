@@ -168,11 +168,25 @@ app.controller('RulesCtrl', ['$scope', '$modal', '$http', function($scope, $moda
     }
   };
   $scope.addRule = function(target, parent){
-    var rule = {project_id: project.id, items:{}, edit: true, _isNew: true};
+    var titles = prompt('请输入标题，多个标题用“_”分割', '德_能_勤_纪_廉');
+    var percent,items;
+    titles = titles.split('_');
+    percent = parent ? 100 : Math.ceil(100 / titles.length);
     if(parent){
-      rule.parent_id = parent.id;
+      items = prompt('请输入选项和分数，多个选项用“_”分割。格式： A:10_B:8', 'A:10_B:8_C:6_D:2');
+      items = items.split('_');
     };
-    target.unshift(rule);
+    angular.forEach(titles, function(t){
+      var rule = {project_id: project.id, name: t, scale: percent, items:{}, edit: true, _isNew: true};
+      if(parent){
+        rule.parent_id = parent.id;
+        angular.forEach(items, function(i){
+          var item = i.split(':');
+          rule.items[item[0]] = item[1] || '';
+        });
+      };
+      target.unshift(rule);
+    });
   };
   $scope.cancelEdit = function(rules, idx){
     var rule = rules[idx];

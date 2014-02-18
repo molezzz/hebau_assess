@@ -12,6 +12,8 @@ var shared = {
 exports.index = function(req, res){
   var Project = orm.model('project');
   var Rule = orm.model('rule');
+  var Member = orm.model('member');
+  var Department = orm.model('department');
   switch (req.format) {
       case 'json':
         var opts = Project.pages(req.query.page, req.query.prepage);
@@ -61,7 +63,9 @@ exports.index = function(req, res){
           ex.extend({
             title: '考评管理',
             cates: Project.cates(),
-            types: Project.types()
+            types: Project.types(),
+            dcates: Department.cates(),
+            mposes: Member.positions()
           }, shared)
         );
   }
@@ -73,16 +77,44 @@ exports.new = function(req, res){
 
 exports.create = function(req, res){
   var Project = orm.model('project');
+  var Department = orm.model('department');
+  var Member = orm.model('member');
   var project = req.body['project'];
   var result = {
     success: false,
     msg: ''
   };
-  //console.log(project);
-  //新版Sequelize将会实现hooks。之前临时采用手动的办法
-  project = Project.build(project);
+  var projects = [];
 
-  project.save().success(function(project){
+  if(project._bulk){
+    delete project['_bulk'];
+    ex.forEach(Department.cates(), function(v, k){
+      //对个人
+      if(project.type == 'PERSON'){
+        ex.forEach(Member.positions(), function(v1, k1){
+          var p;
+          //暂时屏蔽正科副科
+          if(k1 != '2' && k1 != '3'){
+            p = ex.clone(project);
+            p.mpos = k1;
+            p.dcate = k;
+            p.name += '-' + v + '-' + v1;
+            projects.push(p);
+          }
+        });
+      } else {
+        var p = ex.clone(project);
+        p.dcate = k;
+        p.name += '-' + v
+        projects.push(p);
+      }
+
+    });
+  } else {
+    projects.push(project);
+  }
+  Project.bulkCreate(projects)
+  .success(function(project){
     result.success = true;
     result.msg = '新部门添加成功！';
     res.json(result);
@@ -110,7 +142,8 @@ exports.update = function(req, res){
 
   Project.find(projectId).success(function(project){
     console.log(req.body.project);
-    project.updateAttributes(req.body.project, ['type','category','name', 'description', 'high_cut', 'low_cut', 'begin_at', 'end_at'])
+    project.updateAttributes(req.body.project, ['type','category','name', 'dcate', 'mpos',
+      'description', 'high_cut', 'low_cut', 'begin_at', 'end_at'])
         .success(function(){
           result.msg = '更新成功';
           result.success = true;

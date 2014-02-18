@@ -34,6 +34,14 @@ module.exports = {
         notEmpty: true,
       }
     },
+    dcate: {
+      type: Seq.STRING, allowNull: true,
+      comment: '部门类别id，学院、教辅等'
+    },
+    mpos: {
+      type: Seq.STRING, allowNull: true,
+      comment: '人员职位id，正处、副处等'
+    },
     name: {
       type: Seq.STRING, allowNull: false,
       comment: '考核项目名称',

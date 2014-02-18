@@ -76,6 +76,8 @@
               <th>名称</th>
               <th>类别</th>
               <th>类型</th>
+              <th>部门类别</th>
+              <th>人员职位</th>
               <th>剪裁</th>
               <th>状态</th>
               <th>开始时间</th>
@@ -91,6 +93,8 @@
               <td>{{ prj.name }}</td>
               <td ng-bind-html-unsafe="prj.category | cateName"></td>
               <td ng-bind-html-unsafe="prj.type | typeName"></td>
+              <td ng-bind-html-unsafe="prj.dcate | dcateName"></td>
+              <td ng-bind-html-unsafe="prj.mpos | mposName"></td>
               <td>高分：{{prj.high_cut}} % &nbsp;&nbsp; 低分：{{prj.low_cut}} %</td>
               <td  ng-bind-html-unsafe="prj | status"></td>
               <td>{{ prj.begin_at | date:'yyyy-MM-dd HH:mm' }}</td>
@@ -155,7 +159,13 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" ng-click="close()">&times;</button>
-        <h4 class="modal-title">{{title}}</h4>
+        <h4 class="modal-title">
+          {{title}}
+          <div class="btn-group" style="margin-left: 1em;">
+            <button type="button" class="btn btn-warning btn-xs" ng-model="prj._bulk" btn-radio="">单一</button>
+            <button type="button" class="btn btn-warning btn-xs" ng-model="prj._bulk" btn-radio="'1'">批量</button>
+          </div>
+        </h4>
       </div>
       <div class="modal-body clearfix">
         <form name="prj_form" novalidate role="form">
@@ -172,7 +182,7 @@
           <div class="row">
             <div class="form-group col-md-6">
               <label>考评类别 （自评、互评）</label>
-              <select name="category" ng-model="prj.category" ng-options="c.v as c.name for c in cates" class="form-control" required >
+              <select name="category" ng-model="prj.category" ng-options="k as v for (k,v) in cates" class="form-control" required >
                 <option value="">选择类别</option>
               </select>
               <p ng-show="post && prj_form.category.$error.required" class="help-block">
@@ -181,12 +191,26 @@
             </div>
             <div class="form-group col-md-6">
               <label>考评类型 （个人、班子）</label>
-              <select name="type" ng-model="prj.type" ng-options="t.v as t.name for t in types" class="form-control" required >
+              <select name="type" ng-model="prj.type" ng-options="k as v for (k,v) in types" class="form-control" required >
                 <option value="">选择类型</option>
               </select>
               <p ng-show="post && prj_form.type.$error.required" class="help-block">
                 <span class="label label-danger">请选择考评类型！</span>
               </p>
+            </div>
+          </div>
+          <div class="row" ng-hide="prj._bulk == '1'">
+            <div class="form-group" ng-class="{'col-md-6': prj.type == 'PERSON', 'col-md-12': prj.type != 'PERSON'}">
+              <label>部门类别</label>
+              <select name="dcate" ng-model="prj.dcate" ng-options="k as v for (k,v) in dcates" class="form-control">
+                <option value="">选择类别</option>
+              </select>
+            </div>
+            <div class="form-group col-md-6" ng-show="prj.type == 'PERSON'">
+              <label>人员职位</label>
+              <select name="mpos" ng-model="prj.mpos" ng-options="k as v for (k,v) in mposes" class="form-control" >
+                <option value="">选择职位</option>
+              </select>
             </div>
           </div>
           <div class="row">
@@ -275,6 +299,8 @@ Messenger.options = {
 };
 var cates = <%- JSON.stringify(cates) %>;
 var types = <%- JSON.stringify(types) %>;
+var dcates = <%- JSON.stringify(dcates) %>;
+var mposes = <%- JSON.stringify(mposes) %>;
 var app = angular.module('heba.admin.prjs', ['ui.bootstrap'], angular.noop);
 app.filter('cateName', function(){
   var labels = {
@@ -292,6 +318,30 @@ app.filter('typeName', function(){
   };
   return function(val){
     return '<span class="label label-'+labels[val]+'">'+ types[val] +'</span>'
+  }
+});
+app.filter('dcateName', function(){
+  var labels = {
+    '0': 'danger',
+    '1': 'warning',
+    '2': 'success',
+    '3': 'primary'
+  }
+  return function(val){
+    if(!val) return '无';
+    return '<span class="label label-'+labels[val]+'">'+ dcates[val] +'</span>'
+  }
+});
+app.filter('mposName', function(){
+  var labels = {
+    '0': 'danger',
+    '1': 'warning',
+    '2': 'success',
+    '3': 'primary'
+  };
+  return function(val){
+    if(!val) return '无';
+    return '<span class="label label-'+labels[val]+'">'+ mposes[val] +'</span>'
   }
 });
 app.filter('status', function(){
@@ -330,6 +380,8 @@ app.controller('PrjsCtrl', ['$scope', '$modal', '$http', '$timeout', function($s
   $scope.filter = { name: '', category: 'ALL', page: 1 };
   $scope.cates = cates;
   $scope.types = types;
+  $scope.dcates = dcates;
+  $scope.mposes = mposes;
   $scope.perpage = 20;
   $scope.onUpdateTotal = false;
   $scope.records = {
@@ -508,14 +560,17 @@ app.controller('NewPrjCtrl',['$scope', '$modalInstance', 'data', '$http', functi
   $scope.title = data.title || '';
   $scope.prj = $.extend({}, data.prj);
   $scope.post = false;
-  $scope.cates = [];
-  $scope.types = [];
-  angular.forEach(cates, function(v, key){
-    $scope.cates.push({v: key, name: v});
-  });
-  angular.forEach(types, function(v, key){
-    $scope.types.push({v: key, name: v});
-  });
+  $scope.cates = cates;
+  $scope.types = types;
+  $scope.dcates = dcates;
+  $scope.mposes = mposes;
+
+  // angular.forEach(cates, function(v, key){
+  //   $scope.cates.push({v: key, name: v});
+  // });
+  // angular.forEach(types, function(v, key){
+  //   $scope.types.push({v: key, name: v});
+  // });
 
   $scope.dp = {
     dateOptions : {

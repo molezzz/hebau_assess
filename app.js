@@ -87,6 +87,7 @@ app.use(passport.session());
 app.use(app.router);
 // development only
 app.configure('development', function(){
+  app.use(express.errorHandler());
   app.use(function clientErrorHandler(err, req, res, next) {
     if (req.xhr) {
       res.send(500, { error: err });
@@ -94,7 +95,6 @@ app.configure('development', function(){
       next(err);
     }
   });
-  app.use(express.errorHandler());
 });
 // production only
 app.configure('production', function(){
