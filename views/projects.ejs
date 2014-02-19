@@ -47,7 +47,7 @@ $(function(){
                 <td class="cola">{{child.name}}</td>
                 <td class="colb">
                   <label ng-repeat=" (key, i) in child.items">
-                    <span my-radio="child.key" my-model="item.points[child.id]" my-value="key"></span>
+                    <span my-radio="child" my-model="item.points[child.id]" my-value="key"></span>
                     {{key}}
                   </label>
                 </td>
@@ -81,11 +81,10 @@ app.directive('myRadio', ['$compile', function($compile) {
     },
     //replace: true,
     link: function($scope, $elem, $attrs, ctrl) {
-      var input = '<input type="radio" name="'+ $scope.myRadio() +'" ng-required="true" ng-model="'+ $attrs.myModel +'" ng-value="'+ $attrs.myValue +'"/>';
-      //console.log(scope.ngName());
-      //console.log(iElem);
-      //alert(scope.ngName());
-      //iElem.attr('name', scope.ngName());
+      var rule = $scope.myRadio();
+      var input = '<input type="radio" name="'+ rule.key +'" ng-required="true" ng-model="'+ $attrs.myModel +'" ng-value="'+ $attrs.myValue +'"/>';
+      //设置默认值
+      //if($scope.$parent.$first) $scope.$parent.item.points[rule.id] = $scope.$parent.$eval($attrs.myValue);
       var e = $compile(input)($scope.$parent);
       $elem.replaceWith(e);
     }
@@ -103,6 +102,12 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
   $scope.items = [];
   //当前考评对象
   $scope.item = null;
+  //选项默认值
+  $scope.defaults = {
+    itemPoints: {
+
+    }
+  };
   $scope.pCates = <%- JSON.stringify(pCates) %>;
   $scope.pTypes = <%- JSON.stringify(pTypes) %>;
   $scope.recordExists = <%- JSON.stringify(recordExists) %>;
@@ -142,6 +147,9 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
     // };
     // alert(s.join("\n"));
     $.jGrowl("正在保存，请稍候...", { life: 1000 });
+    //测试使用
+    //console.log(record);
+    //return $scope.next();
     $http.post('/projects/records', {record : record})
     .success(function(json, status, headers, config){
       if(json && json.success){
@@ -157,9 +165,10 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
   };
 
   $scope.next = function(){
+    //console.log($scope.items);
     if(tid + 1 < $scope.items.length){
       $scope.item = $scope.items[++tid];
-      $scope.item.points = {};
+      $scope.item.points = angular.extend({}, $scope.defaults.itemPoints);
       if($scope.recordExists[$scope.project.id] && $scope.recordExists[$scope.project.id][$scope.item.id]){
         //console.log([$scope.project.id, $scope.item.id]);
         return $scope.next();
@@ -172,11 +181,20 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
   $scope.nextProject = function(){
     if(pid + 1 < $scope.projects.length){
       $scope.project = $scope.projects[++pid];
+      //console.log([pid, $scope.project]);
       //用于验证是否所有选项都已选择
       var _ruleKeys = [];
+      $scope.defaults.itemPoints = {};
       angular.forEach($scope.project.rules, function(prj, key){
         angular.forEach(prj.children, function(rule, key){
+          var defaultKey;
           _ruleKeys.push(rule.id);
+          //设置默认选项
+          for(var k in rule.items){
+            defaultKey = k;
+            break;
+          };
+          $scope.defaults.itemPoints[rule.id] = defaultKey;
         });
       });
       $scope.project._ruleKeys = _ruleKeys;
@@ -187,16 +205,19 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
         if($scope.project.type == 'PERSON'){
           //人员考核
           $scope.items = [];
-          angular.forEach($scope.members, function(members, key){
-            if(key != $scope.account.department_id) {
-              $scope.items.concat(members);
-            };
+          angular.forEach($scope.members[ $scope.project.dcate + '-' + $scope.project.mpos], function(deps){
+            angular.forEach(deps, function(members, key){
+              //排除本单位
+              if(key != $scope.account.department_id) {
+                $scope.items = $scope.items.concat(members);
+              };
+            });
           });
         } else {
           //班子考核
           $scope.items = [];
           angular.forEach($scope.departments, function(dep, key){
-            if(dep.id != $scope.account.department_id) {
+            if(dep.id != $scope.account.department_id && dep.category_id == $scope.project.dcate) {
               $scope.items.push(dep);
             };
           });
@@ -206,7 +227,7 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
         if($scope.project.type == 'PERSON'){
           //人员考核
           $scope.items = [];
-          angular.forEach($scope.members[$scope.account.department_id], function(member, key){
+          angular.forEach($scope.members[ $scope.project.dcate + '-' + $scope.project.mpos][$scope.account.department_id], function(member, key){
             $scope.items.push(member);
           });
         } else {

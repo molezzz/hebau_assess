@@ -151,10 +151,15 @@ passport.serializeUser(function(user, done) {
 
 passport.deserializeUser(function(obj, done) {
   var model = orm.model(obj.model);
+  var Department = orm.model('department');
+  var q = {where: {id: obj.id}};
   if(!model){
     return done(null, null);
   };
-  model.find(obj.id)
+  if(obj.model == 'account'){
+    q['include'] = [{model: Department, as: 'department', attributes: ['id', 'name','category_id']}];
+  };
+  model.find(q)
   .success(function(user){
     return done(null, user);
   })

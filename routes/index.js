@@ -28,33 +28,48 @@ exports.projects = function(req, res){
     pTypes: Project.types()
   };
   var now = new Date();
-
-  chainer.add(Department.findAll({attributes: ['id','name']}))
-  .add(Member.findAll({
-    attributes: ['id','department_id','name','description','position_id']
-  }))
-  .add(Project.findAll({
-    where: { begin_at : {lt: now}, end_at: {gt: now}, category: account.category },
-    include: [{
-      model: Rule, as: 'rules',where: {parent_id: 0},
-      include: [{model: Rule, as: 'children'}]
-    }]
-  }))
+  var q = {
+    department: {attributes: ['id','name','category_id']},
+    member: {
+      attributes: ['id','department_id','name','description','position_id']
+    },
+    project: {
+      where: { begin_at : {lt: now}, end_at: {gt: now}, category: account.category },
+      attributes: ['id', 'type', 'category', 'dcate', 'mpos', 'name', 'description'],
+      include: [{
+        model: Rule, as: 'rules',where: {parent_id: 0}, attributes: ['id', 'name', 'key'],
+        include: [{model: Rule, as: 'children', attributes: ['id', 'name', 'items', 'key']}]
+      }]
+    }
+  };
+  //自评，只取本单位
+  if(account.category == 'SA'){
+    q['department']['where'] = { id: account.department_id };
+    q['member']['where'] = { department_id: account.department_id };
+    q['project']['where']['dcate'] = account.department.category_id;
+  };
+  chainer.add(Department.findAll(q['department']))
+  .add(Member.findAll(q['member']))
+  .add(Project.findAll(q['project']))
   .run()
   .success(function(results){
     var pids = [];
     data.account = account;
     data.department = null;
-    data.departments = {};
-    data.members = {};
+    data.departments = {}; //{'部门ID': department}
+    data.members = {}; // {'部门类别-职位类别': {'部门ID': [member...]}}
     data.projects = results[2];
     data.recordExists = {};
     ex.forEach(results[0],function(dep){
       data.departments[dep.id] = dep;
     });
     ex.forEach(results[1],function(member){
-      if(!data.members[member.department_id]) data.members[member.department_id] = [];
-      data.members[member.department_id].push(member);
+      //按照 部门类别-级别 分组
+      var dep = data.departments[member.department_id];
+      var key = [dep.category_id, member.position_id].join('-');
+      if(!data.members[key]) data.members[key] = {};
+      if(!data.members[key][member.department_id]) data.members[key][member.department_id] = [];
+      data.members[key][member.department_id].push(member);
     });
     data.department = data.departments[account.department_id];
     ex.forEach(data.projects, function(p){
