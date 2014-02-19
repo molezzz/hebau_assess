@@ -119,9 +119,9 @@
               <span class="navbar-brand">{{project.name}} 考核结果：</span>
             </div>
             <div class="collapse navbar-collapse navbar-right">
-              <div class="btn-group">
+              <!--div class="btn-group">
                 <button ng-repeat="(key, value) in cateFilters" type="button" class="btn btn-default navbar-btn btn-sm" ng-model="cateFilter.key" btn-radio="'{{key}}'">{{value}}</button>
-              </div>
+              </div-->
 
               <div class="btn-group">
                 <button type="button" ng-show="reports" class="btn btn-default navbar-btn btn-sm" title="导出结果" ng-click="export(project)"><i class="glyphicon glyphicon-share"></i></button>
@@ -149,7 +149,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="report in reports | filter: { cate: cateFilter.key }">
+            <tr ng-repeat="report in reports">
               <td>{{$index + 1}}</td>
               <td>{{report.name}}</td>
               <td>{{cateFilters[report.cate]}}</td>
@@ -279,7 +279,7 @@ app.controller('RepoCtrl', ['$scope', '$http', function($scope, $http){
     $http.get('/admin/report', {params: { pid: project.id, format: 'json' }})
     .success(function(json){
       if(json && json.reports){
-        $scope.cateFilter.key = '0';
+        //$scope.cateFilter.key = '0';
         $scope.cateFilters = reportsCate[json.type];
         $scope.reports = json.reports;
         $scope.reportLoading = false;

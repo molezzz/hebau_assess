@@ -13,6 +13,15 @@ var attrs = [
   'name', 'items', 'project_id',
   'parent_id','scale', 'key'
 ];
+var formatItems = function(items){
+  if(!items) return {};
+  var _items = {};  
+  //将选项分数格式化成数字
+  ex.forEach(items, function(v, k){
+    _items[k] = v * 1;
+  });
+  return _items;  
+};
 
 exports.index = function(req, res){
   var Rule = orm.model('rule');
@@ -64,6 +73,7 @@ exports.create = function(req, res){
     msg: ''
   };
   rule.project_id = pid;
+  rule.items = formatItems(rule.items);
 
   Rule.create(rule, { fields: attrs }).success(function(rule){
     result.success = true;
@@ -91,9 +101,12 @@ exports.update = function(req, res){
   var ruleId = req.params.rule;
   var Rule = orm.model('rule');
   var result = {success: false, msg: ''};
-
+  var _rule = req.body.rule;
+  if(_rule.items) {
+    _rule.items = formatItems(_rule.items);
+  };  
   Rule.find(ruleId).success(function(rule){
-    rule.updateAttributes(req.body.rule, attrs)
+    rule.updateAttributes(_rule, attrs)
         .success(function(){
           result.msg = '更新成功';
           result.success = true;
