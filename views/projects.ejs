@@ -227,9 +227,11 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
         if($scope.project.type == 'PERSON'){
           //人员考核
           $scope.items = [];
-          angular.forEach($scope.members[ $scope.project.dcate + '-' + $scope.project.mpos][$scope.account.department_id], function(member, key){
-            $scope.items.push(member);
-          });
+          if($scope.members[ $scope.project.dcate + '-' + $scope.project.mpos]){
+            angular.forEach($scope.members[ $scope.project.dcate + '-' + $scope.project.mpos][$scope.account.department_id], function(member, key){
+              $scope.items.push(member);
+            });
+          };          
         } else {
           //班子考核
           $scope.items = [$scope.departments[$scope.account.department_id]];
