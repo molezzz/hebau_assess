@@ -44,11 +44,12 @@ exports.index = function(req, res){
               ex.forEach(rules, function(r, idx){
                 if(r.parent_id == 0) return;
                 var scale = rules[r.parent_id] ? rules[r.parent_id].scale : 100;
+                //console.log(ex.max(ex.values(r.items), function(v){ return v * 1}), scale);
                 rules[idx] = {
                   id: r.id,
                   name: r.name,
                   parent_id: r.parent_id,
-                  max: (Math.round(ex.max(ex.values(r.items)) * scale) / 100) || 0
+                  max: (Math.round(ex.max(ex.values(r.items),function(v){ return v * 1}) * scale) / 100) || 0
                 };
               });
               p.rules = rules;

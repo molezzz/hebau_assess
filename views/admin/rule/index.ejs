@@ -182,7 +182,7 @@ app.controller('RulesCtrl', ['$scope', '$modal', '$http', function($scope, $moda
         rule.parent_id = parent.id;
         angular.forEach(items, function(i){
           var item = i.split(':');
-          rule.items[item[0]] = item[1] || '';
+          rule.items[item[0]] = (item[1] * 1) || 0;
         });
       };
       target.unshift(rule);
