@@ -8,6 +8,9 @@ body .g-mn {
   border-left: 1px solid #e7e7e7;
   overflow: hidden;
 }
+.m-table .name {
+  color: #C00;
+}
 </style>
 
 <script type="text/javascript">
@@ -231,7 +234,7 @@ app.controller('prjCtrl', ['$scope', '$http', function($scope, $http){
             angular.forEach($scope.members[ $scope.project.dcate + '-' + $scope.project.mpos][$scope.account.department_id], function(member, key){
               $scope.items.push(member);
             });
-          };          
+          };
         } else {
           //班子考核
           $scope.items = [$scope.departments[$scope.account.department_id]];
